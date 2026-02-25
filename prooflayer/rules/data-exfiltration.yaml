@@ -1,0 +1,73 @@
+# Data Exfiltration Detection Rules
+# Detects attempts to send data to external systems
+
+rules:
+  - id: exfil-send-to-url
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: 'send to URL' detected"
+    pattern: "(send|post|upload|transmit)\\s+(to|at)\\s+https?://"
+    score: 25
+
+  - id: exfil-base64-encode
+    severity: high
+    category: data_exfiltration
+    message: "Data exfiltration: Base64 encoding detected"
+    pattern: "base64\\s+(encode|--encode|-e)"
+    score: 15
+
+  - id: exfil-file-read-passwd
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: /etc/passwd access detected"
+    pattern: "/etc/passwd"
+    score: 30
+
+  - id: exfil-file-read-shadow
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: /etc/shadow access detected"
+    pattern: "/etc/shadow"
+    score: 35
+
+  - id: exfil-ssh-keys
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: SSH key access detected"
+    pattern: "\\.ssh/(id_rsa|id_dsa|id_ecdsa|id_ed25519|authorized_keys)"
+    score: 30
+
+  - id: exfil-env-file
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: .env file access detected"
+    pattern: "\\.env"
+    score: 25
+
+  - id: exfil-credentials
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: credentials file access detected"
+    pattern: "(credentials|secrets|api[_-]?keys?)\\.(json|yaml|yml|txt|env)"
+    score: 25
+
+  - id: exfil-cat-command
+    severity: medium
+    category: data_exfiltration
+    message: "Data exfiltration: 'cat' file read detected"
+    pattern: "\\bcat\\s+/"
+    score: 10
+
+  - id: exfil-xxd-hex
+    severity: high
+    category: data_exfiltration
+    message: "Data exfiltration: xxd hex dump detected"
+    pattern: "\\bxxd\\s+"
+    score: 15
+
+  - id: exfil-dns-tunnel
+    severity: critical
+    category: data_exfiltration
+    message: "Data exfiltration: DNS tunneling detected"
+    pattern: "(nslookup|dig|host).*\\$\\("
+    score: 30

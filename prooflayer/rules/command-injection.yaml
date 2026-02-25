@@ -1,0 +1,108 @@
+# Command Injection Detection Rules
+# Detects shell metacharacters and dangerous commands
+
+rules:
+  - id: cmd-inject-semicolon
+    severity: critical
+    category: command_injection
+    message: "Command injection: Shell metacharacter ';' detected"
+    pattern: ";[\\s]*[a-z]"
+    score: 20
+
+  - id: cmd-inject-pipe
+    severity: critical
+    category: command_injection
+    message: "Command injection: Pipe operator '|' detected"
+    pattern: "\\|[\\s]*[a-z]"
+    score: 20
+
+  - id: cmd-inject-double-ampersand
+    severity: critical
+    category: command_injection
+    message: "Command injection: Command chaining '&&' detected"
+    pattern: "&&"
+    score: 15
+
+  - id: cmd-inject-double-pipe
+    severity: high
+    category: command_injection
+    message: "Command injection: OR operator '||' detected"
+    pattern: "\\|\\|"
+    score: 15
+
+  - id: cmd-inject-curl
+    severity: critical
+    category: command_injection
+    message: "Command injection: 'curl' command detected"
+    pattern: "\\bcurl\\s+"
+    score: 25
+
+  - id: cmd-inject-wget
+    severity: critical
+    category: command_injection
+    message: "Command injection: 'wget' command detected"
+    pattern: "\\bwget\\s+"
+    score: 25
+
+  - id: cmd-inject-bash
+    severity: critical
+    category: command_injection
+    message: "Command injection: 'bash' invocation detected"
+    pattern: "\\b(bash|sh|zsh)\\s+-c"
+    score: 30
+
+  - id: cmd-inject-nc
+    severity: critical
+    category: command_injection
+    message: "Command injection: 'nc' (netcat) detected"
+    pattern: "\\b(nc|netcat)\\s+"
+    score: 30
+
+  - id: cmd-inject-exec
+    severity: critical
+    category: command_injection
+    message: "Command injection: 'exec' detected"
+    pattern: "\\bexec\\s+"
+    score: 25
+
+  - id: cmd-inject-eval
+    severity: critical
+    category: command_injection
+    message: "Command injection: 'eval' detected"
+    pattern: "\\beval\\s*\\("
+    score: 25
+
+  - id: cmd-inject-backticks
+    severity: critical
+    category: command_injection
+    message: "Command injection: Backtick execution detected"
+    pattern: "`[^`]+`"
+    score: 25
+
+  - id: cmd-inject-dollar-parens
+    severity: high
+    category: command_injection
+    message: "Command injection: $() command substitution detected"
+    pattern: "\\$\\([^)]+\\)"
+    score: 20
+
+  - id: cmd-inject-redirect-output
+    severity: medium
+    category: command_injection
+    message: "Command injection: Output redirection '>' detected"
+    pattern: ">[>&]?"
+    score: 10
+
+  - id: cmd-inject-redirect-input
+    severity: medium
+    category: command_injection
+    message: "Command injection: Input redirection '<' detected"
+    pattern: "<"
+    score: 10
+
+  - id: cmd-inject-rm-rf
+    severity: critical
+    category: command_injection
+    message: "Command injection: Destructive 'rm -rf' detected"
+    pattern: "\\brm\\s+-[rRf]+"
+    score: 35

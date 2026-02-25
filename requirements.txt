@@ -1,0 +1,5 @@
+# ProofLayer Runtime Security - Requirements
+# Python 3.8+
+
+# Core dependencies
+pyyaml>=6.0.0

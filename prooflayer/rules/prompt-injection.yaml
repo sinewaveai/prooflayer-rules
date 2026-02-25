@@ -1,0 +1,87 @@
+# Direct Prompt Injection Detection Rules
+# Detects attempts to override system prompts
+
+rules:
+  - id: direct-ignore-previous
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: 'ignore previous instructions' detected"
+    pattern: "ignore\\s+(previous|all|prior)\\s+(instructions?|prompts?|commands?)"
+    score: 30
+
+  - id: direct-disregard-system
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: 'disregard system prompt' detected"
+    pattern: "(disregard|forget|override)\\s+(system|original)\\s+(prompt|instructions?)"
+    score: 30
+
+  - id: direct-new-instructions
+    severity: high
+    category: direct_injection
+    message: "Direct injection: 'new instructions' detected"
+    pattern: "(new|updated|revised)\\s+instructions?"
+    score: 20
+
+  - id: direct-ignore-all
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: 'ignore all' detected"
+    pattern: "ignore\\s+all"
+    score: 25
+
+  - id: direct-reset-context
+    severity: high
+    category: direct_injection
+    message: "Direct injection: 'reset context' detected"
+    pattern: "(reset|clear|wipe)\\s+(context|memory|history)"
+    score: 20
+
+  - id: direct-system-override
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: System override attempt detected"
+    pattern: "system\\s+(override|bypass|disable)"
+    score: 30
+
+  - id: direct-skip-checks
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: 'skip security checks' detected"
+    pattern: "(skip|bypass|disable)\\s+(security|safety)\\s+(checks?|validation)"
+    score: 35
+
+  - id: direct-admin-mode
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: Admin mode activation attempt"
+    pattern: "(enable|activate|enter)\\s+admin\\s+mode"
+    score: 30
+
+  - id: direct-unrestricted
+    severity: high
+    category: direct_injection
+    message: "Direct injection: 'unrestricted mode' detected"
+    pattern: "(unrestricted|unlimited|no\\s+limits?)\\s+mode"
+    score: 25
+
+  - id: direct-act-as-system
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: 'act as system' detected"
+    pattern: "act\\s+as\\s+(system|root|admin)"
+    score: 30
+
+  - id: direct-backdoor
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: Backdoor activation attempt"
+    pattern: "(backdoor|secret\\s+mode|hidden\\s+command)"
+    score: 35
+
+  - id: direct-jailbreak
+    severity: critical
+    category: direct_injection
+    message: "Direct injection: Explicit jailbreak mention"
+    pattern: "jailbreak"
+    score: 30
