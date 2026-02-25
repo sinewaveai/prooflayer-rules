@@ -1,0 +1,193 @@
+# ProofLayer Runtime Security Configuration for SUSE
+# ===================================================
+#
+# This configuration is optimized for SUSE Multi-Linux Manager
+# and enterprise Kubernetes deployments.
+
+# Detection Settings
+detection:
+  enabled: true
+
+  # Rules to load
+  # Options: "all", "prompt-injection", "command-injection", "data-exfiltration"
+  rules: "all"
+
+  # Custom rules directory (optional)
+  # rules_dir: "/etc/prooflayer/custom-rules"
+
+  # Risk score thresholds
+  # Format: [min, max] inclusive
+  score_threshold:
+    allow: [0, 29]      # Low risk - allow execution
+    warn: [30, 69]      # Medium risk - log warning but allow
+    block: [70, 100]    # High risk - block execution
+
+  # Additional detection options
+  options:
+    entropy_threshold: 4.5          # Shannon entropy for encoded payloads
+    semantic_validation: true        # Validate parameter semantics
+    context_aware: true             # Consider tool context in scoring
+
+# Response Settings
+response:
+  # Action to take on threat detection
+  # Options: "allow", "warn", "block", "kill"
+  on_threat: "block"
+
+  # Security report directory
+  report_dir: "/var/log/prooflayer/security-reports"
+
+  # Alert webhook for SIEM integration (optional)
+  # alert_webhook: "https://your-siem.com/webhooks/prooflayer"
+
+  # Alert on specific threat types only
+  alert_on:
+    - "command_injection"
+    - "data_exfiltration"
+    - "prompt_injection"
+    # - "jailbreak"  # Uncomment to enable
+
+  # Generate SARIF reports for CI/CD integration
+  sarif_output: true
+
+# Performance Settings
+performance:
+  # Maximum latency target in milliseconds
+  max_latency_ms: 10
+
+  # Cache compiled rules in memory
+  cache_rules: true
+
+  # Enable performance metrics collection
+  metrics_enabled: true
+
+  # Metrics export interval (seconds)
+  metrics_interval: 60
+
+# Logging Settings
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+
+  # Log format: "json" or "text"
+  format: "json"
+
+  # Log destination: "stdout", "file", or "syslog"
+  destination: "syslog"
+
+  # Log file path (if destination is "file")
+  # file_path: "/var/log/prooflayer/runtime.log"
+
+  # Include request details in logs
+  include_request_details: true
+
+  # Include matched rules in logs
+  include_matched_rules: true
+
+# SUSE-Specific Settings
+suse:
+  # Integration with Multi-Linux Manager
+  multi_linux_manager:
+    enabled: true
+
+    # Protected tools (empty list means protect all)
+    protected_tools:
+      - "add_system"
+      - "get_unscheduled_errata"
+      - "apply_patch"
+      - "GetPatchInfo"  # Commented out in Rick's yaml due to injection risk
+
+    # Allow list for specific parameter patterns (regex)
+    allow_patterns:
+      hostname:
+        - "^[a-z0-9-]+$"  # Only lowercase alphanumeric and hyphens
+      distro:
+        - "^sles-[0-9]+$"  # SLES version format
+        - "^ubuntu-[0-9.]+$"
+        - "^rhel-[0-9]+$"
+
+  # SELinux integration
+  selinux:
+    enabled: true
+    enforce_on_block: true  # Use SELinux to enforce blocks
+
+  # NeuVector integration (Phase 3)
+  # neuvector:
+  #   enabled: false
+  #   api_endpoint: "https://neuvector.suse.com"
+  #   api_key: "${NEUVECTOR_API_KEY}"
+
+# Experimental Features (use with caution)
+experimental:
+  # LLM-based semantic analysis for complex evasions
+  llm_analysis: false
+
+  # Behavioral analysis (learn normal patterns)
+  behavioral_analysis: false
+
+  # Auto-tuning of thresholds based on false positive rate
+  auto_tune: false
+
+# Allowlist Configuration
+allowlist:
+  # Tools that bypass all security checks (use with extreme caution)
+  tools: []
+    # - "read_only_tool"
+
+  # Parameter values that bypass checks
+  parameters: {}
+    # hostname:
+    #   - "localhost"
+    #   - "127.0.0.1"
+
+  # IP addresses/ranges that bypass checks
+  sources: []
+    # - "10.0.0.0/8"    # Internal network
+    # - "192.168.1.0/24"
+
+# Blocklist Configuration
+blocklist:
+  # Additional patterns to always block (regex)
+  patterns:
+    - "rm -rf /"
+    - "mkfs\\."
+    - ":(){:|:&};:"  # Fork bomb
+    - "wget.*; chmod.*; \\."  # Common payload pattern
+
+  # Domains to block in any parameter
+  domains:
+    - "*.attacker.com"
+    - "*.evil.com"
+    - "*.malware.net"
+
+  # Commands that should never appear in parameters
+  commands:
+    - "nc"      # Netcat
+    - "ncat"
+    - "socat"
+    - "/dev/tcp"
+    - "bash -i"
+    - "python -c"
+    - "perl -e"
+    - "ruby -e"
+
+# Compliance Settings
+compliance:
+  # Enable compliance mode (stricter validation)
+  mode: false
+
+  # Compliance standards to enforce
+  standards:
+    # - "pci-dss"
+    # - "hipaa"
+    # - "gdpr"
+    # - "soc2"
+
+  # Require digital signatures on reports
+  sign_reports: false
+
+  # Report retention period (days)
+  retention_days: 90
+
+  # Audit trail for all decisions
+  audit_trail: true

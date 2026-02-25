@@ -1,0 +1,37 @@
+[Unit]
+Description=ProofLayer-Protected MCP Server (%I)
+Documentation=https://github.com/sinewaveai/prooflayer-runtime
+After=network.target
+
+[Service]
+Type=simple
+User=mcp
+Group=mcp
+WorkingDirectory=/opt/prooflayer-runtime
+
+# Environment variables
+Environment="PROOFLAYER_CONFIG=/etc/prooflayer/%i.yaml"
+Environment="PROOFLAYER_REPORT_DIR=/var/log/prooflayer/security-reports"
+Environment="PYTHONUNBUFFERED=1"
+
+# Command to run the protected MCP server
+ExecStart=/usr/bin/python3 /opt/prooflayer-runtime/examples/suse/wrapped_mcp_server.py
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/log/prooflayer
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=prooflayer-mcp-%i
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
