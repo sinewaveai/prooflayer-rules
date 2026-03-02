@@ -65,8 +65,8 @@ class SecurityReporter:
         masked_arguments = mask_sensitive_data(arguments) if arguments else {}
 
         # Build scoring breakdown from scan_result if available
-        scoring_breakdown = {}
-        owasp_mapping = []
+        scoring_breakdown: Dict[str, Any] = {}
+        owasp_mapping: List[str] = []
         latency_ms = 0.0
         scan_timestamp = timestamp_str
         if scan_result is not None:

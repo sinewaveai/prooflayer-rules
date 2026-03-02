@@ -2,7 +2,7 @@
 
 import re
 import logging
-from typing import Optional, List, Dict, Any, Iterator, Tuple
+from typing import Optional, List, Dict, Any, Iterator
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class ScanResult:
     latency_ms: float = 0.0
     owasp_mapping: List[str] = field(default_factory=list)
 
-    def __iter__(self) -> Iterator[Tuple[int, List[DetectionRule]]]:
+    def __iter__(self) -> Iterator[Any]:
         """Backwards compatibility: allows `score, rules = engine.scan(...)`."""
         yield self.score
         yield self.matched_rules

@@ -1,6 +1,6 @@
 """Rule loader for YAML detection rules."""
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 import logging
 from pathlib import Path
 from typing import List
