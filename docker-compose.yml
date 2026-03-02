@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  prooflayer:
+    build: .
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./rules:/app/rules:ro
+      - ./security-reports:/app/reports
+    environment:
+      - MCP_SERVER_NAME=prooflayer-dev
+      - LOG_LEVEL=INFO

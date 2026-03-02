@@ -32,27 +32,37 @@ setup(
         ]
     },
     include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "prooflayer=prooflayer.cli:main",
+        ],
+    },
     install_requires=[
         "pyyaml>=6.0.0",
+        "httpx>=0.27.0",
     ],
     extras_require={
+        "mcp": [
+            "mcp>=1.0.0",
+        ],
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
+            "pytest-timeout>=2.0.0",
+            "pytest-asyncio>=0.21.0",
             "black>=23.0.0",
             "mypy>=1.0.0",
-        ]
+        ],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: Other/Proprietary License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Security",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],

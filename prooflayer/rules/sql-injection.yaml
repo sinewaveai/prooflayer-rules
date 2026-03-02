@@ -1,0 +1,51 @@
+# SQL Injection Detection Rules
+# Detects common SQL injection patterns
+
+rules:
+  - id: sql-union-select
+    severity: critical
+    category: sql_injection
+    message: "SQL injection: UNION SELECT detected"
+    pattern: "\\bunion\\s+(all\\s+)?select\\b"
+    score: 25
+    owasp: [LLM06, MCP05, ASI02]
+
+  - id: sql-drop-table
+    severity: critical
+    category: sql_injection
+    message: "SQL injection: DROP TABLE/DATABASE detected"
+    pattern: "\\bdrop\\s+(table|database)\\b"
+    score: 30
+    owasp: [LLM06, MCP05, ASI02]
+
+  - id: sql-or-equals
+    severity: high
+    category: sql_injection
+    message: "SQL injection: OR/AND tautology detected"
+    pattern: "'\\s*(or|and)\\s+['\\d]+\\s*=\\s*['\\d]"
+    score: 20
+    owasp: [LLM06, MCP05, ASI02]
+
+  - id: sql-comment-bypass
+    severity: medium
+    category: sql_injection
+    message: "SQL injection: SQL comment bypass detected"
+    pattern: "--\\s*$|/\\*.*\\*/"
+    score: 15
+    owasp: [LLM06, MCP05, ASI02]
+
+  - id: sql-sleep-benchmark
+    severity: critical
+    category: sql_injection
+    message: "SQL injection: Time-based injection (SLEEP/BENCHMARK) detected"
+    pattern: "\\b(sleep|benchmark|waitfor)\\s*\\("
+    score: 25
+    owasp: [LLM06, MCP05, ASI02]
+
+  - id: sql-information-schema
+    severity: high
+    category: sql_injection
+    message: "SQL injection: information_schema/sys access detected"
+    pattern: "information_schema\\.|sys\\."
+    score: 20
+    owasp: [LLM06, MCP05, ASI02]

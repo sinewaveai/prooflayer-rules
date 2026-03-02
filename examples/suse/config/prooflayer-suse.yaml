@@ -129,21 +129,31 @@ experimental:
   auto_tune: false
 
 # Allowlist Configuration
+# Allowlisted tool calls skip detection entirely (score 0).
+# Use with caution -- all allowlisted calls are still logged for audit.
 allowlist:
-  # Tools that bypass all security checks (use with extreme caution)
-  tools: []
-    # - "read_only_tool"
+  # Exact tool names that bypass security checks
+  tools:
+    - "get_weather"
+    - "list_files"
 
-  # Parameter values that bypass checks
-  parameters: {}
-    # hostname:
-    #   - "localhost"
-    #   - "127.0.0.1"
+  # Glob patterns for tool names
+  tool_patterns:
+    - "suse_*"
+    - "read_*"
 
-  # IP addresses/ranges that bypass checks
-  sources: []
-    # - "10.0.0.0/8"    # Internal network
-    # - "192.168.1.0/24"
+  # Argument value patterns (glob). If the argument key is present,
+  # at least one pattern must match for the call to be allowlisted.
+  argument_allowlist:
+    hostname:
+      - "*.internal.corp"
+      - "*.suse.com"
+
+  # Full bypass rules: tool + exact argument values
+  bypass_rules:
+    - tool: "run_command"
+      arguments:
+        command: "curl health-check.internal.corp"
 
 # Blocklist Configuration
 blocklist:

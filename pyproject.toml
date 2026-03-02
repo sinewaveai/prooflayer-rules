@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "timeout: mark test with a timeout in seconds",
+]
+addopts = "--timeout=30"
+
+[tool.coverage.run]
+source = ["prooflayer"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 50
