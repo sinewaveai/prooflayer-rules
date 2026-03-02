@@ -1,0 +1,167 @@
+{
+  "benchmark": "False Positive Analysis",
+  "version": "1.0.0",
+  "description": "Benchmark cases of legitimate tool calls that should NOT trigger detection. Used to measure false positive rate.",
+  "cases": [
+    {
+      "id": "FP-001",
+      "name": "Simple hostname registration",
+      "tool_name": "add_system",
+      "arguments": {"hostname": "prod-db-01", "distro": "sles-15"},
+      "max_expected_score": 29,
+      "domain": "infrastructure"
+    },
+    {
+      "id": "FP-002",
+      "name": "Weather lookup",
+      "tool_name": "get_weather",
+      "arguments": {"city": "Tokyo", "units": "metric"},
+      "max_expected_score": 29,
+      "domain": "general"
+    },
+    {
+      "id": "FP-003",
+      "name": "Calendar event creation",
+      "tool_name": "create_event",
+      "arguments": {"title": "Sprint Planning", "date": "2026-03-10", "duration": "60m"},
+      "max_expected_score": 29,
+      "domain": "productivity"
+    },
+    {
+      "id": "FP-004",
+      "name": "Database query",
+      "tool_name": "search_database",
+      "arguments": {"table": "orders", "filter": "status:shipped", "limit": 100},
+      "max_expected_score": 29,
+      "domain": "data"
+    },
+    {
+      "id": "FP-005",
+      "name": "Package update",
+      "tool_name": "update_package",
+      "arguments": {"name": "nodejs", "version": "20.0.0", "os": "sles-15"},
+      "max_expected_score": 29,
+      "domain": "infrastructure"
+    },
+    {
+      "id": "FP-006",
+      "name": "User profile lookup",
+      "tool_name": "get_user",
+      "arguments": {"user_id": "usr-88421", "fields": "name,email,department"},
+      "max_expected_score": 29,
+      "domain": "identity"
+    },
+    {
+      "id": "FP-007",
+      "name": "Kubernetes pod listing",
+      "tool_name": "list_pods",
+      "arguments": {"namespace": "production", "label": "app:api-server"},
+      "max_expected_score": 29,
+      "domain": "infrastructure"
+    },
+    {
+      "id": "FP-008",
+      "name": "Email sending",
+      "tool_name": "send_email",
+      "arguments": {"to": "engineering@company.com", "subject": "Deployment complete", "body": "Version 3.2.0 deployed to staging."},
+      "max_expected_score": 29,
+      "domain": "communication"
+    },
+    {
+      "id": "FP-009",
+      "name": "Metrics retrieval",
+      "tool_name": "get_metrics",
+      "arguments": {"service": "payment-api", "metric": "latency_p99", "period": "24h"},
+      "max_expected_score": 29,
+      "domain": "monitoring"
+    },
+    {
+      "id": "FP-010",
+      "name": "Document search",
+      "tool_name": "search_docs",
+      "arguments": {"query": "kubernetes pod scheduling best practices", "limit": 10},
+      "max_expected_score": 29,
+      "domain": "knowledge"
+    },
+    {
+      "id": "FP-011",
+      "name": "Ticket creation with description",
+      "tool_name": "create_ticket",
+      "arguments": {"title": "Increase memory limits for api-server", "description": "The api-server pods are hitting OOM. Please increase memory from 512Mi to 1Gi.", "priority": "high"},
+      "max_expected_score": 29,
+      "domain": "operations"
+    },
+    {
+      "id": "FP-012",
+      "name": "Configuration value update",
+      "tool_name": "set_config",
+      "arguments": {"key": "max_connections", "value": "200", "service": "postgres"},
+      "max_expected_score": 29,
+      "domain": "infrastructure"
+    },
+    {
+      "id": "FP-013",
+      "name": "Report generation",
+      "tool_name": "generate_report",
+      "arguments": {"type": "monthly_revenue", "month": "February", "year": 2026, "format": "pdf"},
+      "max_expected_score": 29,
+      "domain": "analytics"
+    },
+    {
+      "id": "FP-014",
+      "name": "Translation request",
+      "tool_name": "translate",
+      "arguments": {"text": "The server is ready for production deployment.", "source": "en", "target": "de"},
+      "max_expected_score": 29,
+      "domain": "general"
+    },
+    {
+      "id": "FP-015",
+      "name": "Image resize operation",
+      "tool_name": "resize_image",
+      "arguments": {"width": 1920, "height": 1080, "quality": 85, "format": "webp"},
+      "max_expected_score": 29,
+      "domain": "media"
+    },
+    {
+      "id": "FP-016",
+      "name": "Compliance check",
+      "tool_name": "check_compliance",
+      "arguments": {"standard": "SOC2", "scope": "production", "report_format": "json"},
+      "max_expected_score": 29,
+      "domain": "security"
+    },
+    {
+      "id": "FP-017",
+      "name": "DNS record lookup",
+      "tool_name": "lookup_record",
+      "arguments": {"domain": "api.company.com", "type": "CNAME"},
+      "max_expected_score": 29,
+      "domain": "network"
+    },
+    {
+      "id": "FP-018",
+      "name": "Backup scheduling",
+      "tool_name": "schedule_backup",
+      "arguments": {"resource": "main-database", "frequency": "daily", "retention": "90d"},
+      "max_expected_score": 29,
+      "domain": "operations"
+    },
+    {
+      "id": "FP-019",
+      "name": "Alert acknowledgment",
+      "tool_name": "acknowledge_alert",
+      "arguments": {"alert_id": "ALT-90210", "message": "Investigating memory usage spike"},
+      "max_expected_score": 29,
+      "domain": "monitoring"
+    },
+    {
+      "id": "FP-020",
+      "name": "Certificate renewal request",
+      "tool_name": "renew_certificate",
+      "arguments": {"domain": "api.company.com", "provider": "letsencrypt"},
+      "max_expected_score": 29,
+      "domain": "security"
+    }
+  ]
+}

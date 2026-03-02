@@ -1,6 +1,6 @@
 """Configuration file loader."""
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from typing import Dict, Any
 from pathlib import Path
 

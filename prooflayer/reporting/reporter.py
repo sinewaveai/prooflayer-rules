@@ -7,9 +7,12 @@ Generates security reports in JSON and SARIF formats.
 
 import json
 import os
-from datetime import datetime
+import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any
+
+from ..utils.masking import mask_sensitive_data
 
 
 class SecurityReporter:
@@ -24,8 +27,11 @@ class SecurityReporter:
         Args:
             report_dir: Directory to write reports
         """
+        self._lock = threading.Lock()
         self.report_dir = Path(report_dir)
         self.report_dir.mkdir(parents=True, exist_ok=True)
+        # Restrict report directory to owner only
+        os.chmod(self.report_dir, 0o700)
 
     def generate_report(
         self,
@@ -34,7 +40,8 @@ class SecurityReporter:
         arguments: Dict[str, Any],
         risk_score: int,
         matched_rules: List[Any],
-        action: str
+        action: str,
+        scan_result: Any = None,
     ) -> Dict[str, Any]:
         """
         Generate a security report.
@@ -46,12 +53,27 @@ class SecurityReporter:
             risk_score: Calculated risk score
             matched_rules: List of matched detection rules
             action: Action taken (ALLOW/WARN/BLOCK/KILL)
+            scan_result: Optional ScanResult to auto-populate extended fields
 
         Returns:
             Dict containing report data and file path
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         timestamp_str = timestamp.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+        # Mask sensitive data before writing to report
+        masked_arguments = mask_sensitive_data(arguments) if arguments else {}
+
+        # Build scoring breakdown from scan_result if available
+        scoring_breakdown: Dict[str, Any] = {}
+        owasp_mapping: List[str] = []
+        latency_ms = 0.0
+        scan_timestamp = timestamp_str
+        if scan_result is not None:
+            scoring_breakdown = getattr(scan_result, "scoring_breakdown", {})
+            owasp_mapping = getattr(scan_result, "owasp_mapping", [])
+            latency_ms = getattr(scan_result, "latency_ms", 0.0)
+            scan_timestamp = getattr(scan_result, "timestamp", timestamp_str)
 
         report = {
             "prooflayer_version": "0.1.0",
@@ -59,7 +81,7 @@ class SecurityReporter:
             "threat": {
                 "type": threat_type,
                 "tool": tool_name,
-                "arguments": arguments,
+                "arguments": masked_arguments,
                 "risk_score": risk_score,
                 "action": action
             },
@@ -73,20 +95,28 @@ class SecurityReporter:
                     }
                     for rule in matched_rules
                 ],
-                "confidence": "HIGH" if risk_score > 70 else "MEDIUM" if risk_score > 30 else "LOW"
+                "confidence": "HIGH" if risk_score > 70 else "MEDIUM" if risk_score > 30 else "LOW",
+                "scoring_breakdown": scoring_breakdown,
             },
             "context": {
                 "timestamp_detected": timestamp_str,
+                "timestamp_received": scan_timestamp,
+                "latency_ms": round(latency_ms, 3),
+                "mcp_message_id": None,
+                "mcp_session_id": None,
                 "server": os.environ.get("MCP_SERVER_NAME", "unknown")
-            }
+            },
+            "owasp_mapping": owasp_mapping,
         }
 
-        # Write JSON report
-        report_filename = f"threat-{timestamp.strftime('%Y%m%d-%H%M%S')}.json"
+        # Write JSON report with restricted permissions
+        report_filename = f"prooflayer-{timestamp.strftime('%Y%m%d-%H%M%S')}-{threat_type}.json"
         report_path = self.report_dir / report_filename
 
-        with open(report_path, "w") as f:
-            json.dump(report, f, indent=2)
+        with self._lock:
+            with open(report_path, "w") as f:
+                json.dump(report, f, indent=2)
+            os.chmod(report_path, 0o600)
 
         report["report_path"] = str(report_path)
 
@@ -140,11 +170,13 @@ class SecurityReporter:
             ]
         }
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         sarif_path = self.report_dir / f"sarif-report-{timestamp}.sarif"
 
-        with open(sarif_path, "w") as f:
-            json.dump(sarif, f, indent=2)
+        with self._lock:
+            with open(sarif_path, "w") as f:
+                json.dump(sarif, f, indent=2)
+            os.chmod(sarif_path, 0o600)
 
         return str(sarif_path)
 

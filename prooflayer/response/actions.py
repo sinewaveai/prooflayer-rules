@@ -12,6 +12,8 @@ import logging
 from enum import Enum
 from typing import Dict, Any, Optional
 
+from .killer import ServerKiller
+
 logger = logging.getLogger(__name__)
 
 
@@ -137,43 +139,12 @@ class ResponseAction:
         """
         Terminate the MCP server process.
 
+        Delegates to ServerKiller.kill().
+
         Args:
             context: Context information for logging
         """
-        logger.critical("=" * 80)
-        logger.critical("PROOFLAYER RUNTIME SECURITY: CRITICAL THREAT DETECTED")
-        logger.critical(f"Tool: {context.get('tool_name')}")
-        logger.critical(f"Risk Score: {context.get('risk_score')}")
-        logger.critical(f"Action: MCP SERVER TERMINATED")
-        logger.critical("=" * 80)
-
-        # Write emergency log
-        try:
-            with open("/tmp/prooflayer-emergency.log", "a") as f:
-                f.write(f"\n{'='*80}\n")
-                f.write(f"TIMESTAMP: {context.get('timestamp', 'N/A')}\n")
-                f.write(f"TOOL: {context.get('tool_name')}\n")
-                f.write(f"RISK SCORE: {context.get('risk_score')}\n")
-                f.write(f"ARGUMENTS: {context.get('arguments')}\n")
-                f.write(f"{'='*80}\n")
-        except Exception as e:
-            logger.error(f"Failed to write emergency log: {e}")
-
-        # Kill the process
-        pid = os.getpid()
-        logger.critical(f"Sending SIGTERM to process {pid}")
-
-        # Give a brief moment for logs to flush
-        sys.stdout.flush()
-        sys.stderr.flush()
-
-        # Terminate
-        os.kill(pid, signal.SIGTERM)
-
-        # If still running after 1 second, force kill
-        import time
-        time.sleep(1)
-        os.kill(pid, signal.SIGKILL)
+        ServerKiller().kill(context)
 
 
 class SecurityViolation(Exception):
