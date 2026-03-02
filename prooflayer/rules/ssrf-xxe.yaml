@@ -1,0 +1,51 @@
+# SSRF and XXE Detection Rules
+# Detects Server-Side Request Forgery and XML External Entity attacks
+
+rules:
+  - id: ssrf-cloud-metadata
+    severity: critical
+    category: ssrf_xxe
+    message: "SSRF: Cloud metadata endpoint access detected"
+    pattern: "169\\.254\\.169\\.254|metadata\\.google|169\\.254\\.170\\.2"
+    score: 30
+    owasp: [LLM06, MCP01, ASI02]
+
+  - id: ssrf-internal-ip
+    severity: high
+    category: ssrf_xxe
+    message: "SSRF: Internal/private IP address in URL detected"
+    pattern: "(https?://)(127\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)"
+    score: 25
+    owasp: [LLM06, MCP01, ASI02]
+
+  - id: ssrf-file-scheme
+    severity: high
+    category: ssrf_xxe
+    message: "SSRF: file:// scheme detected"
+    pattern: "file://"
+    score: 25
+    owasp: [LLM06, MCP01, ASI02]
+
+  - id: xxe-entity-declaration
+    severity: critical
+    category: ssrf_xxe
+    message: "XXE: DOCTYPE or ENTITY declaration detected"
+    pattern: "<!\\s*(DOCTYPE|ENTITY)"
+    score: 30
+    owasp: [LLM06, MCP01, ASI02]
+
+  - id: xxe-system-entity
+    severity: critical
+    category: ssrf_xxe
+    message: "XXE: SYSTEM entity reference detected"
+    pattern: "SYSTEM\\s+['\"]"
+    score: 30
+    owasp: [LLM06, MCP01, ASI02]
+
+  - id: ssrf-gopher-scheme
+    severity: high
+    category: ssrf_xxe
+    message: "SSRF: gopher:// scheme detected"
+    pattern: "gopher://"
+    score: 25
+    owasp: [LLM06, MCP01, ASI02]

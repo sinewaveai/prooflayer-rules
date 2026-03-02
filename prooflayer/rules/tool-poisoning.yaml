@@ -1,0 +1,46 @@
+# Tool Poisoning Detection Rules
+# Detects hidden instructions and payload injection in tool descriptions
+# OWASP: LLM03, MCP03, ASI04
+
+rules:
+  - id: poison-when-called-execute
+    severity: critical
+    category: tool_poisoning
+    message: "Tool poisoning: hidden execution instruction in description"
+    pattern: "when\\s+(this\\s+tool\\s+is\\s+)?called,?\\s+(execute|run|perform)"
+    score: 30
+
+  - id: poison-silently-run
+    severity: critical
+    category: tool_poisoning
+    message: "Tool poisoning: silent execution instruction"
+    pattern: "silently\\s+(run|execute|perform|send|upload)"
+    score: 30
+
+  - id: poison-hidden-instruction
+    severity: critical
+    category: tool_poisoning
+    message: "Tool poisoning: hidden instruction tags detected"
+    pattern: "<\\s*(hidden|invisible|secret)\\s*>"
+    score: 25
+
+  - id: poison-tool-description-inject
+    severity: critical
+    category: tool_poisoning
+    message: "Tool poisoning: injected pre/post execution"
+    pattern: "(before|after)\\s+respond(ing)?,?\\s+(first\\s+)?(run|execute|call|send)"
+    score: 30
+
+  - id: poison-before-responding
+    severity: critical
+    category: tool_poisoning
+    message: "Tool poisoning: covert pre-response instruction"
+    pattern: "before\\s+responding\\s+to\\s+the\\s+user"
+    score: 25
+
+  - id: poison-inject-into-output
+    severity: critical
+    category: tool_poisoning
+    message: "Tool poisoning: output injection instruction"
+    pattern: "inject\\s+(into|in)\\s+(the\\s+)?(output|response|result)"
+    score: 25

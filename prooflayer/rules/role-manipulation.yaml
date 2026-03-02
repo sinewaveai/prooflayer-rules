@@ -1,0 +1,60 @@
+# Role Manipulation Detection Rules
+# Detects attempts to manipulate LLM roles and personas
+# OWASP: LLM01, MCP06, ASI01
+
+rules:
+  - id: role-you-are-now
+    severity: critical
+    category: role_manipulation
+    message: "Role manipulation: 'you are now' malicious role detected"
+    pattern: "you are now\\s+(a |an |the )?(unrestricted|unfiltered|evil|malicious|hacked|compromised)"
+    score: 20
+
+  - id: role-pretend-to-be
+    severity: high
+    category: role_manipulation
+    message: "Role manipulation: 'pretend to be' detected"
+    pattern: "pretend\\s+to\\s+be\\s+(a |an )?(hacker|admin|root|unrestricted|evil|malicious)"
+    score: 20
+
+  - id: role-roleplay-as-admin
+    severity: critical
+    category: role_manipulation
+    message: "Role manipulation: roleplay as admin detected"
+    pattern: "role\\s*play\\s+(as\\s+)?(admin|root|superuser|god\\s+mode)"
+    score: 25
+
+  - id: role-act-as-root
+    severity: critical
+    category: role_manipulation
+    message: "Role manipulation: 'act as root/admin' detected"
+    pattern: "(act|behave|function)\\s+as\\s+(root|admin|superuser|sudo)"
+    score: 25
+
+  - id: role-assume-the-role
+    severity: high
+    category: role_manipulation
+    message: "Role manipulation: 'assume the role' detected"
+    pattern: "assume\\s+the\\s+role\\s+of\\s+(a |an )?"
+    score: 20
+
+  - id: role-switch-personality
+    severity: high
+    category: role_manipulation
+    message: "Role manipulation: personality switch detected"
+    pattern: "switch\\s+(your\\s+)?(personality|character|persona|identity)\\s+to"
+    score: 20
+
+  - id: role-become-unrestricted
+    severity: critical
+    category: role_manipulation
+    message: "Role manipulation: 'become unrestricted' detected"
+    pattern: "become\\s+(an?\\s+)?(unrestricted|unfiltered|uncensored|unlimited)"
+    score: 30
+
+  - id: role-impersonate
+    severity: high
+    category: role_manipulation
+    message: "Role manipulation: impersonation detected"
+    pattern: "impersonate\\s+(a |an |the )?"
+    score: 20

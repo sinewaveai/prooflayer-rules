@@ -27,13 +27,17 @@ python3 examples/attack-scenarios/01_command_injection.py
 ```
 
 ### Testing
-There are currently no automated tests in the repository. When adding tests:
 ```bash
-# Run tests (once implemented)
-pytest
+# Run all tests
+python3 -m pytest tests/ -v --tb=short
 
 # Run with coverage
-pytest --cov=prooflayer
+python3 -m pytest tests/ --cov=prooflayer --cov-report=term-missing
+
+# Run specific test suites
+python3 -m pytest tests/test_adversarial.py -v   # Adversarial bypass tests
+python3 -m pytest tests/test_fuzzing.py -v        # Fuzz-like random input tests
+python3 -m pytest tests/test_integration.py -v    # End-to-end integration tests
 ```
 
 ### Code Quality
@@ -55,7 +59,7 @@ mypy prooflayer/
 - Wraps MCP server's `call_tool` method to intercept all tool calls
 
 **DetectionEngine** (`prooflayer/detection/engine.py`)
-- Scans MCP tool calls for threats across 6 categories (59+ rules)
+- Scans MCP tool calls for threats across 4 YAML categories (45 rules) plus inline heuristics
 - Pattern matching using regex from YAML rule files
 - Additional scoring from: shell metacharacters, entropy analysis, semantic analysis
 - Returns: risk score (0-100) and list of matched rules
@@ -168,7 +172,15 @@ runtime = ProofLayerRuntime(
 - `prooflayer/reporting/reporter.py` - SecurityReporter for JSON reports
 - `prooflayer/config/loader.py` - ConfigLoader for YAML config
 - `prooflayer/utils/entropy.py` - Shannon entropy calculation
+- `prooflayer/detection/normalizer.py` - Input normalization (unicode, encoding, whitespace)
+- `prooflayer/config/allowlist.py` - Allowlisting mechanism for known-safe tool calls
+- `prooflayer/utils/masking.py` - Secret masking for reports
+- `tests/test_adversarial.py` - Adversarial bypass tests (58 tests)
+- `tests/test_fuzzing.py` - Fuzz-like random input tests (28 tests)
+- `tests/test_integration.py` - End-to-end integration tests (26 tests)
+- `.github/workflows/ci.yml` - CI/CD pipeline (Python 3.9-3.12)
 - `setup.py` - Package installation configuration
+- `pyproject.toml` - pytest and coverage configuration
 - `requirements.txt` - Core dependency (pyyaml>=6.0.0)
 
 ## Security Report Format
@@ -194,8 +206,8 @@ Reports are written to `{report_dir}/threat-{timestamp}.json`:
 
 ## Important Notes
 
-- The system has **zero external dependencies** beyond PyYAML
-- Detection latency target: <10ms per tool call
+- The system has a single external dependency: PyYAML
+- Detection latency target: low latency per tool call (benchmarks pending)
 - The `ProtectedMCPServer` wraps the original server's `call_tool` method by replacing it with a wrapper function
 - When `action_on_threat="kill"` and risk score ≥90, the server process terminates via `os.kill(pid, signal.SIGTERM)`
 - Emergency logs are written to `/tmp/prooflayer-emergency.log` on KILL action

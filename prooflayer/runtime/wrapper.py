@@ -9,13 +9,15 @@ import os
 import sys
 import json
 import logging
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict, Optional, Callable, Tuple
 from pathlib import Path
 
 from ..detection.engine import DetectionEngine
 from ..response.actions import ResponseAction, ThreatAction
 from ..reporting.reporter import SecurityReporter
 from ..config.loader import ConfigLoader
+from ..utils.logging import configure_logging
+from ..metrics import metrics, start_metrics_server
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +39,7 @@ class ProofLayerRuntime:
         detection_rules: Optional[str] = None,
         action_on_threat: str = "kill",
         report_dir: Optional[str] = None,
-        score_threshold: Optional[Dict[str, tuple]] = None
+        score_threshold: Optional[Dict[str, Tuple[int, ...]]] = None
     ):
         """
         Initialize ProofLayer Runtime.
@@ -64,7 +66,8 @@ class ProofLayerRuntime:
         # Initialize components
         self.detection_engine = DetectionEngine(
             rules_dir=self.config["detection"].get("rules_dir"),
-            score_threshold=self.config["detection"].get("score_threshold")
+            score_threshold=self.config["detection"].get("score_threshold"),
+            fail_closed=self.config["detection"].get("fail_closed", True)
         )
 
         self.reporter = SecurityReporter(
@@ -75,6 +78,20 @@ class ProofLayerRuntime:
             default_action=self.config["response"].get("on_threat", "warn"),
             reporter=self.reporter
         )
+
+        # Apply structured logging from config
+        log_cfg = self.config.get("logging", {})
+        configure_logging(
+            level=log_cfg.get("level", "INFO"),
+            log_format=log_cfg.get("format", "text"),
+        )
+
+        # Enable metrics if configured
+        metrics_cfg = self.config.get("metrics", {})
+        if metrics_cfg.get("enabled", False):
+            metrics.enabled = True
+            metrics_port = metrics_cfg.get("port", 9090)
+            start_metrics_server(port=metrics_port)
 
         logger.info(f"ProofLayer Runtime v0.1.0 initialized")
         logger.info(f"Detection rules loaded: {len(self.detection_engine.rules)}")
@@ -133,7 +150,7 @@ class ProofLayerRuntime:
         tool_name: str,
         arguments: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None
-    ) -> tuple[int, ThreatAction, Dict[str, Any]]:
+    ) -> Tuple[int, ThreatAction, Dict[str, Any]]:
         """
         Scan a single MCP tool call for threats.
 
@@ -204,9 +221,15 @@ class ProtectedMCPServer:
                 action = self.response_action.decide_action(risk_score)
 
                 if action == ThreatAction.BLOCK or action == ThreatAction.KILL:
+                    # Extract threat type from highest-scoring matched rule
+                    threat_type = "unknown"
+                    if matched_rules:
+                        top_rule = max(matched_rules, key=lambda r: r.score)
+                        threat_type = top_rule.category
+
                     # Generate security report
                     report = self.reporter.generate_report(
-                        threat_type="prompt_injection",
+                        threat_type=threat_type,
                         tool_name=tool_name,
                         arguments=arguments,
                         risk_score=risk_score,

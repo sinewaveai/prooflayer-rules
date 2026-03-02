@@ -1,0 +1,28 @@
+# ProofLayer Runtime Security Configuration
+# See docs/configuration.md for full reference
+
+detection:
+  enabled: true
+  rules_dir: null  # null = use packaged rules
+  score_threshold:
+    allow: [0, 29]
+    warn: [30, 69]
+    block: [70, 100]
+  fail_closed: true
+
+response:
+  on_threat: warn  # allow, warn, block, kill
+  report_dir: ./security-reports
+  alert_webhook: null
+
+performance:
+  max_latency_ms: 10
+  cache_rules: true
+
+logging:
+  level: INFO
+  format: json
+
+metrics:
+  enabled: false
+  port: 9090

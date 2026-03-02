@@ -15,10 +15,10 @@ ProofLayer Runtime Security wraps MCP (Model Context Protocol) servers with real
 
 ## Features
 
-✅ **59+ Detection Rules** across 6 categories
-✅ **<10ms Latency** per tool call
+✅ **45 Detection Rules** across 4 YAML categories, plus inline heuristics
+✅ **Low Latency** detection per tool call
 ✅ **JSON + SARIF Reports** for compliance
-✅ **Zero External Dependencies** (pure Python)
+✅ **Minimal Dependencies** (PyYAML only)
 ✅ **MCP-Native** (not a proxy)
 ✅ **Server Kill** on critical threats
 
@@ -82,14 +82,7 @@ python3 examples/basic/simple_wrapped_server.py
 - Network exfiltration
 - Sensitive file patterns
 
-### Role Manipulation (8 rules)
-- "You are now"
-- "Pretend to be"
-- Admin override attempts
-
-### Tool Poisoning (6 rules)
-- Malicious tool descriptions
-- Hidden instructions in metadata
+*Additional inline heuristics cover role manipulation and tool poisoning patterns as fallbacks.*
 
 ## Configuration
 
@@ -185,7 +178,7 @@ See `examples/suse/` for integration with SUSE Multi-Linux Manager:
              ▼
 ┌─────────────────────────────────┐
 │  ProofLayer Runtime Interceptor │
-│  ├─ Scan Parameters (59 rules)  │
+│  ├─ Scan Parameters (45 rules)  │
 │  ├─ Score Risk (0-100)          │
 │  └─ ALLOW/WARN/BLOCK/KILL       │
 └────────────┬────────────────────┘
@@ -201,14 +194,13 @@ See `examples/suse/` for integration with SUSE Multi-Linux Manager:
 
 ## Performance
 
-- **Detection latency**: <10ms per tool call
+- **Detection latency**: Low latency per tool call (benchmarks pending)
 - **Memory usage**: ~50MB
-- **Throughput**: 1000+ scans/second
-- **False positive rate**: <5%
+- **Throughput**: Benchmarks pending
 
 ## License
 
-MIT License - Copyright © 2026 Sinewave AI
+Proprietary License — see [LICENSE](LICENSE) file for details. Copyright © 2026 Sinewave AI
 
 ## Links
 
