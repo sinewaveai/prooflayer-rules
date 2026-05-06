@@ -184,5 +184,4 @@ See [configuration.md](configuration.md) for the full reference.
 - [Architecture](architecture.md) -- understand how ProofLayer works internally
 - [Detection Rules](detection-rules.md) -- browse all 53+ detection rules
 - [Configuration](configuration.md) -- full YAML configuration reference
-- [SUSE Integration](suse-integration.md) -- deploy with SUSE Multi-Linux Manager
 - [Demo Guide](demo-guide.md) -- run attack scenarios end-to-end
