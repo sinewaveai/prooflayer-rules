@@ -1,8 +1,12 @@
 # ProofLayer Runtime Security
 
-**Runtime prompt injection firewall for MCP servers**
+**Runtime prompt injection firewall for MCP servers** — the open core of the [ProofLayer](https://www.proof-layer.com) security platform.
 
 Built for SUSE Multi-Linux Manager, NeuVector integration, and enterprise Kubernetes deployments.
+
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+> **Open core.** This repository is the runtime engine — MCP interceptor, rule loader, action engine, transport, and a bundled MCP-attack rule pack — distributed under Apache License 2.0 so SUSE customers and other regulated buyers can audit and deploy it. The closed-source LoRA detector and the future hosted control plane are distributed separately under commercial terms; see [`NOTICE`](NOTICE) for the open/closed split.
 
 ## Overview
 
@@ -200,17 +204,21 @@ See `examples/suse/` for integration with SUSE Multi-Linux Manager:
 
 ## License
 
-Proprietary License — see [LICENSE](LICENSE) file for details. Copyright © 2026 Sinewave AI
+Apache License 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for the full text and license history. Copyright © 2026 Sinewave AI.
+
+This is a **forward-only relicense**: all commits at and after the cutover are Apache 2.0; commits prior to the cutover remain under the previous proprietary "All rights reserved" terms. Run `git log --follow -- LICENSE` to see the precise cutover commit.
+
+The closed-source detector model (LoRA + GRPO training) and future hosted control plane are **not** covered by this license — they are distributed separately under commercial terms.
 
 ## Links
 
-- **GitHub**: https://github.com/sinewaveai/prooflayer-runtime (coming soon)
+- **GitHub**: https://github.com/sinewaveai/prooflayer-runtime
 - **Website**: https://www.proof-layer.com
-- **Issues**: https://github.com/sinewaveai/agent-security-scanner-mcp/issues
+- **Issues**: https://github.com/sinewaveai/prooflayer-runtime/issues
 
 ## Contributing
 
-See `docs/CONTRIBUTING.md` for guidelines.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). We use Developer Certificate of Origin (DCO) sign-off — add `-s` to every commit (`git commit -s`). Detection rules, transport improvements, and tests are particularly welcome.
 
 ---
 
