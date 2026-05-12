@@ -12,6 +12,8 @@ The runtime works by itself in rules-only mode. It can also call the
 ambiguous events. The model-backed scoring tier is a separate commercial
 offering; see [proof-layer.com](https://www.proof-layer.com).
 
+**Hot-path latency: p99 6.23 ms** on the rules layer (10K-scan benchmark, see [`benchmarks/`](benchmarks/)). Sub-100 ms even on conservative hardware.
+
 ## What This Repo Contains
 
 - Local MCP runtime wrappers for synchronous and MCP Python SDK servers.
@@ -144,6 +146,8 @@ prooflayer proxy --listen-port 8080 --backend-port 8081
 
 The proxy inspects `tools/call` payloads, forwards safe calls, and returns an
 MCP-compatible error result for blocked calls.
+
+See [`examples/integrations/`](examples/integrations/) for the MCP gateway integration pattern (ToolHive, custom gateways, embeddable in any reverse-proxy posture).
 
 ## Detector Service
 
