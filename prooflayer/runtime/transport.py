@@ -3,8 +3,7 @@ ProofLayer Transport Proxy
 ===========================
 
 HTTP reverse proxy that intercepts MCP JSON-RPC tool calls
-for security scanning. Designed for Rick Spencer's simple-mcp
-(Go-based MCP server that speaks HTTP).
+for security scanning. Designed for MCP servers that speak HTTP.
 
 Usage:
     proxy = ProofLayerTransportProxy(listen_port=8080, backend_port=8081)
@@ -16,16 +15,15 @@ Usage:
 import json
 import logging
 import threading
-import time
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from typing import Optional, Dict, Any
+from typing import Optional
 
 import httpx
 
 from ..detection.engine import DetectionEngine
-from ..detection.models import ScanResult
+from ..detection.detector_client import ExternalDetectorClient, apply_detector_result
 from ..reporting.reporter import SecurityReporter
-from ..response.actions import ResponseAction, ThreatAction
+from ..response.actions import ResponseAction
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +43,9 @@ class ProofLayerTransportProxy:
         report_dir: str = "./security-reports",
         action_on_threat: str = "block",
         kill_on_threat: bool = False,
+        detector_client: Optional[ExternalDetectorClient] = None,
+        detector_url: Optional[str] = None,
+        detector_timeout_ms: int = 250,
     ):
         self.listen_port = listen_port
         self.backend_host = backend_host
@@ -57,6 +58,12 @@ class ProofLayerTransportProxy:
         self.response_action = response_action or ResponseAction(
             default_action=action_on_threat, reporter=self.reporter
         )
+        self.detector_client = detector_client
+        if self.detector_client is None and detector_url:
+            self.detector_client = ExternalDetectorClient(
+                base_url=detector_url,
+                timeout_ms=detector_timeout_ms,
+            )
 
         self._server: Optional[ThreadingHTTPServer] = None
         self._thread: Optional[threading.Thread] = None
@@ -257,6 +264,14 @@ class ProofLayerTransportProxy:
 
         # Run detection
         result = self.engine.scan(tool_name=tool_name, arguments=arguments)
+        detector_result = None
+        if self.detector_client:
+            detector_result = self.detector_client.scan(
+                tool_name=tool_name,
+                arguments=arguments,
+                metadata={"jsonrpc_id": request_id},
+            )
+        result = apply_detector_result(result, detector_result)
 
         if result.score >= self.engine.score_threshold["block"][0]:
             # THREAT - block

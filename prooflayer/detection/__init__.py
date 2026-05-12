@@ -2,6 +2,7 @@
 
 from .models import DetectionRule, ScanResult
 from .engine import DetectionEngine
+from .detector_client import ExternalDetectorClient, apply_detector_result
 from .rules import RuleLoadError
 from .normalizer import normalize_text, flatten_arguments
 from .scanner import PatternScanner
@@ -10,6 +11,7 @@ from .semantic import SemanticAnalyzer
 
 __all__ = [
     "DetectionEngine",
+    "ExternalDetectorClient",
     "DetectionRule",
     "ScanResult",
     "RuleLoadError",
@@ -18,4 +20,5 @@ __all__ = [
     "SemanticAnalyzer",
     "normalize_text",
     "flatten_arguments",
+    "apply_detector_result",
 ]
