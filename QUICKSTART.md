@@ -23,8 +23,14 @@ python3 -c "from prooflayer import ProofLayerRuntime; print('Import OK')"
 # Run the basic wrapped-server example
 python3 examples/basic/simple_wrapped_server.py
 
-# Run a command-injection attack scenario
+# Run all four attack-scenario suites
 python3 examples/attack-scenarios/01_command_injection.py
+python3 examples/attack-scenarios/02_data_exfiltration.py
+python3 examples/attack-scenarios/03_prompt_injection.py
+python3 examples/attack-scenarios/04_jailbreak_attempts.py
+
+# Try the SUSE Multi-Linux Manager integration example
+python3 examples/suse/wrapped_mcp_server.py
 ```
 
 ## Basic Usage

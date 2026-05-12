@@ -19,7 +19,7 @@ from .runtime.middleware import ProofLayerMiddleware
 
 __version__ = "0.1.0"
 __author__ = "Sinewave AI"
-__license__ = "MIT"
+__license__ = "Apache-2.0"
 
 __all__ = [
     "ProofLayerRuntime",
