@@ -271,7 +271,7 @@ class ProofLayerTransportProxy:
                 arguments=arguments,
                 metadata={"jsonrpc_id": request_id},
             )
-        result = apply_detector_result(result, detector_result)
+        apply_detector_result(result, detector_result)
 
         if result.score >= self.engine.score_threshold["block"][0]:
             # THREAT - block

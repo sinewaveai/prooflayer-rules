@@ -5,13 +5,39 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 
 from .models import DetectionRule, ScanResult
 
 logger = logging.getLogger(__name__)
+
+
+CATEGORY_OWASP_TAGS: Dict[str, List[str]] = {
+    "prompt_injection": ["LLM01"],
+    "jailbreak": ["LLM01"],
+    "role_manipulation": ["LLM01"],
+    "system_override": ["LLM01"],
+    "data_exfiltration": ["LLM02"],
+    "sensitive_info_disclosure": ["LLM02"],
+    "tool_poisoning": ["LLM06"],
+    "command_injection": ["A03"],
+    "sql_injection": ["A03"],
+    "ssrf": ["A10"],
+    "xxe": ["A05"],
+}
+
+
+def _owasp_tags_for(categories: List[str]) -> List[str]:
+    tags: List[str] = []
+    for category in categories:
+        for tag in CATEGORY_OWASP_TAGS.get(category, []):
+            if tag not in tags:
+                tags.append(tag)
+    if not tags:
+        tags.append("LLM01")
+    return tags
 
 
 class ExternalDetectorClient:
@@ -32,14 +58,55 @@ class ExternalDetectorClient:
         timeout_ms: int = 250,
         enabled: bool = True,
         http_client: Optional[httpx.Client] = None,
+        async_http_client: Optional[httpx.AsyncClient] = None,
     ):
         self.base_url = base_url.rstrip("/")
         self.timeout_ms = timeout_ms
         self.enabled = enabled
-        self._client = http_client or httpx.Client(
-            base_url=self.base_url,
-            timeout=timeout_ms / 1000,
-        )
+        self._client: Optional[httpx.Client] = http_client
+        self._async_client: Optional[httpx.AsyncClient] = async_http_client
+        self._owns_client = http_client is None
+        self._owns_async_client = async_http_client is None
+
+    def _get_client(self) -> httpx.Client:
+        if self._client is None:
+            self._client = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout_ms / 1000,
+            )
+        return self._client
+
+    def _get_async_client(self) -> httpx.AsyncClient:
+        if self._async_client is None:
+            self._async_client = httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=self.timeout_ms / 1000,
+            )
+        return self._async_client
+
+    def close(self) -> None:
+        """Close any owned underlying HTTP clients. Safe to call multiple times."""
+        if self._client is not None and self._owns_client:
+            try:
+                self._client.close()
+            except Exception:
+                pass
+        self._client = None
+
+    async def aclose(self) -> None:
+        """Async close for the AsyncClient pool, if one was created."""
+        if self._async_client is not None and self._owns_async_client:
+            try:
+                await self._async_client.aclose()
+            except Exception:
+                pass
+        self._async_client = None
+
+    def __enter__(self) -> "ExternalDetectorClient":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()
 
     def scan(
         self,
@@ -47,7 +114,7 @@ class ExternalDetectorClient:
         arguments: Dict[str, Any],
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[DetectorResult]:
-        """Send one runtime event to the external detector.
+        """Send one runtime event to the external detector (blocking).
 
         Returns None on timeout, connection failure, invalid response, or when
         disabled. Runtime security gracefully degrades to rules-only mode.
@@ -55,25 +122,56 @@ class ExternalDetectorClient:
         if not self.enabled:
             return None
 
-        body = {
-            "prompt": self._extract_prompt(arguments),
-            "tool_name": tool_name,
-            "tool_arguments": arguments,
-            "metadata": metadata or {},
-        }
+        body = self._build_body(tool_name, arguments, metadata)
 
         try:
-            response = self._client.post(
+            response = self._get_client().post(
                 "/v1/detect",
                 content=json.dumps(body, separators=(",", ":"), default=str),
                 headers={"Content-Type": "application/json"},
             )
             response.raise_for_status()
-            payload = response.json()
-            return self._parse_result(payload)
+            return self._parse_result(response.json())
         except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
             logger.warning("External detector unavailable; using rules-only mode: %s", exc)
             return None
+
+    async def scan_async(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[DetectorResult]:
+        """Async variant of `scan` — safe to call from event-loop code."""
+        if not self.enabled:
+            return None
+
+        body = self._build_body(tool_name, arguments, metadata)
+
+        try:
+            response = await self._get_async_client().post(
+                "/v1/detect",
+                content=json.dumps(body, separators=(",", ":"), default=str),
+                headers={"Content-Type": "application/json"},
+            )
+            response.raise_for_status()
+            return self._parse_result(response.json())
+        except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+            logger.warning("External detector unavailable; using rules-only mode: %s", exc)
+            return None
+
+    def _build_body(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        return {
+            "prompt": self._extract_prompt(arguments),
+            "tool_name": tool_name,
+            "tool_arguments": arguments,
+            "metadata": metadata or {},
+        }
 
     def _parse_result(self, payload: Dict[str, Any]) -> DetectorResult:
         label = str(payload["label"])
@@ -100,6 +198,11 @@ class ExternalDetectorClient:
             value = arguments.get(key)
             if isinstance(value, str) and value:
                 return value
+            if isinstance(value, (bytes, bytearray)) and value:
+                try:
+                    return value.decode("utf-8", errors="replace")
+                except Exception:
+                    pass
         return json.dumps(arguments, sort_keys=True, default=str)
 
     @staticmethod
@@ -113,15 +216,18 @@ class ExternalDetectorClient:
 def apply_detector_result(
     scan_result: ScanResult,
     detector_result: Optional[ExternalDetectorClient.DetectorResult],
-) -> ScanResult:
-    """Merge detector score into a rules scan result."""
+) -> None:
+    """Merge detector score into a rules scan result.
+
+    Mutates `scan_result` in place. Returns None.
+    """
     if (
         detector_result is None
         or detector_result.risk_score <= 0
         or detector_result.label == "benign"
         or detector_result.model == "error"
     ):
-        return scan_result
+        return
 
     scan_result.scoring_breakdown["detector_score"] = detector_result.risk_score
 
@@ -150,8 +256,6 @@ def apply_detector_result(
                 pattern="",
                 score=detector_result.risk_score,
                 category=category,
-                owasp=["LLM01", "MCP06"],
+                owasp=_owasp_tags_for(detector_result.categories),
             )
         )
-
-    return scan_result

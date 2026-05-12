@@ -47,3 +47,44 @@ response:
     assert captured["report_dir"] == "./config-reports"
     assert captured["stopped"] is True
 
+
+def test_proxy_command_defaults_detector_url_when_enabled_without_url(
+    monkeypatch, tmp_path, capsys
+):
+    config_path = tmp_path / "prooflayer.yaml"
+    config_path.write_text(
+        """
+detector:
+  enabled: true
+""",
+        encoding="utf-8",
+    )
+    captured = {}
+
+    class FakeProxy:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def start(self):
+            raise KeyboardInterrupt
+
+        def stop(self):
+            captured["stopped"] = True
+
+    monkeypatch.setattr("prooflayer.runtime.transport.ProofLayerTransportProxy", FakeProxy)
+
+    cli.cmd_proxy(
+        Namespace(
+            listen_port=8080,
+            backend_port=8081,
+            backend_host="127.0.0.1",
+            config=str(config_path),
+            rules_dir=None,
+            report_dir=None,
+        )
+    )
+
+    assert captured["detector_url"] == "http://127.0.0.1:8088"
+    stderr = capsys.readouterr().err
+    assert "detector.url is unset" in stderr
+

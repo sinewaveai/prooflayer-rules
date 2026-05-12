@@ -65,7 +65,7 @@ class ProofLayerRuntime:
         if detector_url:
             self.config.setdefault("detector", {})["url"] = detector_url
             self.config.setdefault("detector", {})["enabled"] = True
-        if detector_timeout_ms:
+        if detector_timeout_ms is not None:
             self.config.setdefault("detector", {})["timeout_ms"] = detector_timeout_ms
 
         # Initialize components
@@ -196,7 +196,7 @@ class ProofLayerRuntime:
                 arguments=arguments,
                 metadata=context,
             )
-        result = apply_detector_result(result, detector_result)
+        apply_detector_result(result, detector_result)
         risk_score = result.score
         matched_rules = result.matched_rules
 
@@ -256,7 +256,7 @@ class ProtectedMCPServer:
                         tool_name=tool_name,
                         arguments=arguments,
                     )
-                result = apply_detector_result(result, detector_result)
+                apply_detector_result(result, detector_result)
                 risk_score = result.score
                 matched_rules = result.matched_rules
 
