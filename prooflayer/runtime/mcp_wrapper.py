@@ -14,6 +14,7 @@ Usage:
 Requires: pip install prooflayer-runtime[mcp]
 """
 
+import asyncio
 import logging
 import functools
 from typing import Any, Dict, Optional
@@ -65,7 +66,7 @@ class ProofLayerMCPWrapper:
         report_dir: Optional[str] = None,
         scan_tool_descriptions: bool = True,
         scan_tool_outputs: bool = True,
-        fail_closed: bool = True,
+        fail_closed: Optional[bool] = None,
         detector_client: Optional[Any] = None,
         detector_url: Optional[str] = None,
         detector_timeout_ms: Optional[int] = None,
@@ -118,7 +119,9 @@ class ProofLayerMCPWrapper:
             detector_cfg = self.config.setdefault("detector", {})
             detector_cfg["timeout_ms"] = detector_timeout_ms
 
-        detection_cfg["fail_closed"] = fail_closed
+        if fail_closed is not None:
+            detection_cfg["fail_closed"] = fail_closed
+        effective_fail_closed = detection_cfg.get("fail_closed", True)
 
         self.scan_tool_descriptions = scan_tool_descriptions
         self.scan_tool_outputs = scan_tool_outputs
@@ -127,7 +130,7 @@ class ProofLayerMCPWrapper:
         self.detection_engine = DetectionEngine(
             rules_dir=detection_cfg.get("rules_dir"),
             score_threshold=detection_cfg.get("score_threshold"),
-            fail_closed=fail_closed,
+            fail_closed=effective_fail_closed,
         )
 
         self.reporter = SecurityReporter(
@@ -246,12 +249,29 @@ class ProofLayerMCPWrapper:
                     )
                     detector_result = None
                     if wrapper_self.detector_client:
-                        detector_result = wrapper_self.detector_client.scan(
-                            tool_name=name,
-                            arguments=arguments,
-                            metadata={"surface": "mcp_sdk"},
+                        scan_async = getattr(
+                            wrapper_self.detector_client, "scan_async", None
                         )
-                    result = apply_detector_result(result, detector_result)
+                        if scan_async is not None:
+                            detector_result = await scan_async(
+                                tool_name=name,
+                                arguments=arguments,
+                                metadata={"surface": "mcp_sdk"},
+                            )
+                        else:
+                            # Detector client predates scan_async — offload the
+                            # blocking call so we don't stall the event loop.
+                            loop = asyncio.get_running_loop()
+                            detector_result = await loop.run_in_executor(
+                                None,
+                                functools.partial(
+                                    wrapper_self.detector_client.scan,
+                                    tool_name=name,
+                                    arguments=arguments,
+                                    metadata={"surface": "mcp_sdk"},
+                                ),
+                            )
+                    apply_detector_result(result, detector_result)
                     risk_score = result.score
                     matched_rules = result.matched_rules
 

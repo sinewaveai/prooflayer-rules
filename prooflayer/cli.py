@@ -331,7 +331,17 @@ def cmd_proxy(args):
         detector_cfg = config.get("detector", {})
         response_cfg = config.get("response", {})
         detection_cfg = config.get("detection", {})
-        detector_url = detector_cfg.get("url") if detector_cfg.get("enabled", False) else None
+        if detector_cfg.get("enabled", False):
+            detector_url = detector_cfg.get("url")
+            if not detector_url:
+                detector_url = "http://127.0.0.1:8088"
+                print(
+                    f"WARN: detector.enabled=true but detector.url is unset; "
+                    f"defaulting to {detector_url}",
+                    file=sys.stderr,
+                )
+        else:
+            detector_url = None
         detector_timeout_ms = detector_cfg.get("timeout_ms", 250)
         report_dir = args.report_dir or response_cfg.get("report_dir", "./security-reports")
         rules_dir = args.rules_dir or detection_cfg.get("rules_dir")
