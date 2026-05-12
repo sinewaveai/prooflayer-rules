@@ -66,6 +66,6 @@ setup(
         "Topic :: Security",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    keywords="mcp security runtime firewall prompt-injection ai-security",
+    keywords="mcp security runtime firewall prompt-injection ai-agents ai-security",
     license="Apache-2.0",
 )

@@ -19,6 +19,11 @@ performance:
   max_latency_ms: 10
   cache_rules: true
 
+detector:
+  enabled: false
+  url: http://127.0.0.1:8088
+  timeout_ms: 250
+
 logging:
   level: INFO
   format: json

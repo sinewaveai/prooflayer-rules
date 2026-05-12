@@ -14,6 +14,7 @@ Or pass parameters directly (they override config file values):
 runtime = ProofLayerRuntime(
     action_on_threat="kill",
     report_dir="./security-reports",
+    detector_url="http://127.0.0.1:8088",
     score_threshold={
         "allow": (0, 29),
         "warn": (30, 69),
@@ -89,6 +90,23 @@ performance:
   cache_rules: true
 
 # ----------------------------------------------------------
+# External Detector Settings
+# ----------------------------------------------------------
+detector:
+  # Enable calls to the proprietary prooflayer-detector service.
+  # When false, runtime uses rules-only open-core mode.
+  # Type: bool | Default: false
+  enabled: false
+
+  # Local detector API URL. The detector is expected to expose /v1/detect.
+  # Type: string | Default: http://127.0.0.1:8088
+  url: http://127.0.0.1:8088
+
+  # Detector request timeout. Timeout/errors gracefully degrade to rules-only.
+  # Type: int | Default: 250
+  timeout_ms: 250
+
+# ----------------------------------------------------------
 # Logging Settings
 # ----------------------------------------------------------
 logging:
@@ -142,6 +160,14 @@ metrics:
 | `max_latency_ms` | int | `10` | Advisory latency target per scan. Individual regex evaluations are hard-capped at 100ms with a circuit breaker after 3 consecutive timeouts. |
 | `cache_rules` | bool | `true` | Cache compiled regex patterns in memory for faster matching. |
 
+### `detector`
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enabled` | bool | `false` | Enables the optional proprietary `prooflayer-detector` model service. When disabled, runtime remains rules-only. |
+| `url` | string | `http://127.0.0.1:8088` | Base URL for the local detector service. Runtime posts events to `/v1/detect`. |
+| `timeout_ms` | int | `250` | Per-event timeout. Timeout, connection, and invalid-response errors are logged and degrade to rules-only scanning. |
+
 ### `logging`
 
 | Key | Type | Default | Description |
@@ -189,10 +215,42 @@ ProofLayer reads the following environment variables:
 |----------|-------------|
 | `MCP_SERVER_NAME` | Server name included in security reports (default: `unknown`) |
 
+## Optional Detector Integration
+
+`prooflayer-runtime` can call the closed `prooflayer-detector` service when it
+is deployed next to the runtime. The detector returns a label, confidence score,
+categories, and reasons. Runtime converts that confidence into the 0-100 risk
+score scale and takes the stricter result between rules and detector output.
+
+Detector-assisted mode sends the full extracted prompt, tool name, tool
+arguments, and metadata to the detector service. Detector v1 is OpenAI-first, so
+operators should assume that detector-scored content traverses the configured
+OpenAI API unless they are running a later air-gap backend. Keep
+`detector.enabled: false` for workloads that cannot send tool-call content to a
+cloud model.
+
+Detector failures do not fail open or block traffic by themselves. If the
+detector times out, is unreachable, or returns an invalid response, ProofLayer
+logs a warning and continues with rules-only scanning.
+
+Payload limits should be aligned across repos. Runtime accepts tool arguments up
+to its local validation limit, while detector v1 defaults to a 64KB HTTP request
+limit. Oversized detector requests degrade to rules-only scanning today; treat
+that as a visible detector-bypass condition when tuning production policies.
+
+Example:
+
+```yaml
+detector:
+  enabled: true
+  url: http://127.0.0.1:8088
+  timeout_ms: 250
+```
+
 ## Loading Priority
 
 Configuration values are resolved in this order (highest priority first):
 
-1. Constructor parameters (`action_on_threat`, `report_dir`, `score_threshold`)
+1. Constructor parameters (`action_on_threat`, `report_dir`, `score_threshold`, `detector_url`, `detector_timeout_ms`)
 2. YAML config file (`config_path`)
 3. Built-in defaults
