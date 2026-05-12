@@ -4,8 +4,6 @@ ProofLayer Runtime Security
 
 Runtime prompt injection firewall for MCP servers.
 Detects malicious prompts, kills compromised servers, generates security reports.
-
-Built for SUSE Multi-Linux Manager and enterprise Kubernetes deployments.
 """
 
 from .runtime.wrapper import ProofLayerRuntime

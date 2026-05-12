@@ -6,13 +6,11 @@ Wraps MCP servers with runtime security monitoring.
 """
 
 import os
-import sys
-import json
 import logging
-from typing import Any, Dict, Optional, Callable, Tuple
-from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 from ..detection.engine import DetectionEngine
+from ..detection.detector_client import ExternalDetectorClient, apply_detector_result
 from ..response.actions import ResponseAction, ThreatAction
 from ..reporting.reporter import SecurityReporter
 from ..config.loader import ConfigLoader
@@ -37,9 +35,11 @@ class ProofLayerRuntime:
         self,
         config_path: Optional[str] = None,
         detection_rules: Optional[str] = None,
-        action_on_threat: str = "kill",
+        action_on_threat: Optional[str] = None,
         report_dir: Optional[str] = None,
-        score_threshold: Optional[Dict[str, Tuple[int, ...]]] = None
+        score_threshold: Optional[Dict[str, Tuple[int, ...]]] = None,
+        detector_url: Optional[str] = None,
+        detector_timeout_ms: Optional[int] = None,
     ):
         """
         Initialize ProofLayer Runtime.
@@ -56,12 +56,17 @@ class ProofLayerRuntime:
         # Override config with explicit parameters
         if detection_rules:
             self.config["detection"]["rules"] = detection_rules
-        if action_on_threat:
+        if action_on_threat is not None:
             self.config["response"]["on_threat"] = action_on_threat
         if report_dir:
             self.config["response"]["report_dir"] = report_dir
         if score_threshold:
             self.config["detection"]["score_threshold"] = score_threshold
+        if detector_url:
+            self.config.setdefault("detector", {})["url"] = detector_url
+            self.config.setdefault("detector", {})["enabled"] = True
+        if detector_timeout_ms:
+            self.config.setdefault("detector", {})["timeout_ms"] = detector_timeout_ms
 
         # Initialize components
         self.detection_engine = DetectionEngine(
@@ -79,6 +84,8 @@ class ProofLayerRuntime:
             reporter=self.reporter
         )
 
+        self.detector_client = self._build_detector_client()
+
         # Apply structured logging from config
         log_cfg = self.config.get("logging", {})
         configure_logging(
@@ -93,7 +100,7 @@ class ProofLayerRuntime:
             metrics_port = metrics_cfg.get("port", 9090)
             start_metrics_server(port=metrics_port)
 
-        logger.info(f"ProofLayer Runtime v0.1.0 initialized")
+        logger.info("ProofLayer Runtime v0.1.0 initialized")
         logger.info(f"Detection rules loaded: {len(self.detection_engine.rules)}")
         logger.info(f"Default action on threat: {self.response_action.default_action}")
 
@@ -122,11 +129,26 @@ class ProofLayerRuntime:
                 "max_latency_ms": 10,
                 "cache_rules": True
             },
+            "detector": {
+                "enabled": False,
+                "url": "http://127.0.0.1:8088",
+                "timeout_ms": 250
+            },
             "logging": {
                 "level": "INFO",
                 "format": "json"
             }
         }
+
+    def _build_detector_client(self) -> Optional[ExternalDetectorClient]:
+        """Build optional external detector client from configuration."""
+        detector_cfg = self.config.get("detector", {})
+        if not detector_cfg.get("enabled", False):
+            return None
+        return ExternalDetectorClient(
+            base_url=detector_cfg.get("url", "http://127.0.0.1:8088"),
+            timeout_ms=detector_cfg.get("timeout_ms", 250),
+        )
 
     def wrap(self, mcp_server: Any) -> "ProtectedMCPServer":
         """
@@ -142,7 +164,8 @@ class ProofLayerRuntime:
             mcp_server=mcp_server,
             detection_engine=self.detection_engine,
             response_action=self.response_action,
-            reporter=self.reporter
+            reporter=self.reporter,
+            detector_client=self.detector_client,
         )
 
     def scan_tool_call(
@@ -162,11 +185,20 @@ class ProofLayerRuntime:
         Returns:
             Tuple of (risk_score, action, detection_details)
         """
-        # Run detection
-        risk_score, matched_rules = self.detection_engine.scan(
+        result = self.detection_engine.scan(
             tool_name=tool_name,
             arguments=arguments
         )
+        detector_result = None
+        if self.detector_client:
+            detector_result = self.detector_client.scan(
+                tool_name=tool_name,
+                arguments=arguments,
+                metadata=context,
+            )
+        result = apply_detector_result(result, detector_result)
+        risk_score = result.score
+        matched_rules = result.matched_rules
 
         # Determine action based on score
         if risk_score <= self.config["detection"]["score_threshold"]["allow"][1]:
@@ -195,12 +227,14 @@ class ProtectedMCPServer:
         mcp_server: Any,
         detection_engine: DetectionEngine,
         response_action: ResponseAction,
-        reporter: SecurityReporter
+        reporter: SecurityReporter,
+        detector_client: Optional[Any] = None,
     ):
         self.mcp_server = mcp_server
         self.detection_engine = detection_engine
         self.response_action = response_action
         self.reporter = reporter
+        self.detector_client = detector_client
 
         # Wrap the original tool call handler
         self._wrap_tool_handlers()
@@ -212,10 +246,19 @@ class ProtectedMCPServer:
         if original_call_tool:
             def wrapped_call_tool(tool_name: str, arguments: Dict[str, Any]):
                 # Security scan before execution
-                risk_score, matched_rules = self.detection_engine.scan(
+                result = self.detection_engine.scan(
                     tool_name=tool_name,
                     arguments=arguments
                 )
+                detector_result = None
+                if self.detector_client:
+                    detector_result = self.detector_client.scan(
+                        tool_name=tool_name,
+                        arguments=arguments,
+                    )
+                result = apply_detector_result(result, detector_result)
+                risk_score = result.score
+                matched_rules = result.matched_rules
 
                 # Determine action
                 action = self.response_action.decide_action(risk_score)
