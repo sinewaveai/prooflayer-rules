@@ -16,10 +16,10 @@ Usage:
 import argparse
 import json
 import sys
-import os
 from pathlib import Path
 
 from . import __version__
+from .config.loader import ConfigLoader
 from .detection.engine import DetectionEngine
 from .detection.rules import RuleLoader, RuleLoadError
 from .response.actions import ThreatAction
@@ -327,12 +327,22 @@ def cmd_proxy(args):
     from .runtime.transport import ProofLayerTransportProxy
 
     try:
+        config = ConfigLoader.load(args.config) if args.config else {}
+        detector_cfg = config.get("detector", {})
+        response_cfg = config.get("response", {})
+        detection_cfg = config.get("detection", {})
+        detector_url = detector_cfg.get("url") if detector_cfg.get("enabled", False) else None
+        detector_timeout_ms = detector_cfg.get("timeout_ms", 250)
+        report_dir = args.report_dir or response_cfg.get("report_dir", "./security-reports")
+        rules_dir = args.rules_dir or detection_cfg.get("rules_dir")
         proxy = ProofLayerTransportProxy(
             listen_port=args.listen_port,
             backend_port=args.backend_port,
             backend_host=args.backend_host,
-            rules_dir=args.rules_dir,
-            report_dir=args.report_dir,
+            rules_dir=rules_dir,
+            report_dir=report_dir,
+            detector_url=detector_url,
+            detector_timeout_ms=detector_timeout_ms,
         )
     except Exception as e:
         print(f"ERROR: Failed to start proxy: {e}", file=sys.stderr)
@@ -340,7 +350,9 @@ def cmd_proxy(args):
 
     print(f"ProofLayer proxy listening on :{args.listen_port}")
     print(f"Forwarding to {args.backend_host}:{args.backend_port}")
-    print(f"Security reports: {args.report_dir}")
+    print(f"Security reports: {report_dir}")
+    if detector_url:
+        print(f"Detector: {detector_url} ({detector_timeout_ms}ms timeout)")
 
     try:
         proxy.start()

@@ -9,7 +9,6 @@ Tests for the ProofLayerRuntime wrapper and ProtectedMCPServer.
 import unittest
 import sys
 import os
-from unittest.mock import Mock, MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -51,6 +50,37 @@ class TestProofLayerRuntime(unittest.TestCase):
         )
         self.assertEqual(runtime.config["response"]["on_threat"], "block")
         self.assertEqual(runtime.config["response"]["report_dir"], "/tmp/test-reports")
+
+    def test_config_file_action_is_not_overridden_by_default_parameter(self):
+        """Config file response action should survive when no override is supplied."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = Path(tmp_dir) / "prooflayer.yaml"
+            config_path.write_text(
+                """
+detection:
+  enabled: true
+  rules_dir: null
+  score_threshold:
+    allow: [0, 29]
+    warn: [30, 69]
+    block: [70, 100]
+  fail_closed: true
+response:
+  on_threat: warn
+  report_dir: ./security-reports
+logging:
+  level: INFO
+  format: json
+""",
+                encoding="utf-8",
+            )
+
+            runtime = ProofLayerRuntime(config_path=str(config_path))
+
+        self.assertEqual(runtime.config["response"]["on_threat"], "warn")
 
     def test_wrap_mcp_server(self):
         """Test wrapping an MCP server."""
@@ -94,7 +124,7 @@ class TestProtectedMCPServer(unittest.TestCase):
         """Test that benign calls pass through to the original server."""
         runtime = ProofLayerRuntime(action_on_threat="warn")
         mock_server = MockMCPServer()
-        protected = runtime.wrap(mock_server)
+        runtime.wrap(mock_server)
 
         # Make a benign call
         result = mock_server.call_tool(
@@ -109,7 +139,7 @@ class TestProtectedMCPServer(unittest.TestCase):
         """Test that malicious calls are blocked."""
         runtime = ProofLayerRuntime(action_on_threat="block")
         mock_server = MockMCPServer()
-        protected = runtime.wrap(mock_server)
+        runtime.wrap(mock_server)
 
         # Try to make a malicious call
         with self.assertRaises(SecurityError):
@@ -122,7 +152,7 @@ class TestProtectedMCPServer(unittest.TestCase):
         """Test that suspicious calls generate warnings but pass through."""
         runtime = ProofLayerRuntime(action_on_threat="warn")
         mock_server = MockMCPServer()
-        protected = runtime.wrap(mock_server)
+        runtime.wrap(mock_server)
 
         # Make a moderately suspicious call
         # This should warn but not block
@@ -151,7 +181,7 @@ class TestIntegration(unittest.TestCase):
         """Test end-to-end flow with benign request."""
         runtime = ProofLayerRuntime(action_on_threat="block")
         mock_server = MockMCPServer()
-        protected = runtime.wrap(mock_server)
+        runtime.wrap(mock_server)
 
         # Execute benign call
         result = mock_server.call_tool(
@@ -165,7 +195,7 @@ class TestIntegration(unittest.TestCase):
         """Test end-to-end flow with attack — a clearly dangerous payload."""
         runtime = ProofLayerRuntime(action_on_threat="block")
         mock_server = MockMCPServer()
-        protected = runtime.wrap(mock_server)
+        runtime.wrap(mock_server)
 
         # Execute attack with a payload that triggers enough rules to get BLOCK
         with self.assertRaises(SecurityError) as context:

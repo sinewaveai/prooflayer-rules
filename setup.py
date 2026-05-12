@@ -66,6 +66,6 @@ setup(
         "Topic :: Security",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    keywords="mcp security runtime firewall prompt-injection suse kubernetes",
+    keywords="mcp security runtime firewall prompt-injection ai-agents",
     license="Proprietary",
 )

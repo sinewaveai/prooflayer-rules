@@ -16,13 +16,13 @@ Requires: pip install prooflayer-runtime[mcp]
 
 import logging
 import functools
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, Optional
 
 from ..detection.engine import DetectionEngine
-from ..detection.rules import RuleLoadError
 from ..response.actions import ResponseAction, ThreatAction
 from ..reporting.reporter import SecurityReporter
 from ..config.loader import ConfigLoader
+from ..detection.detector_client import ExternalDetectorClient, apply_detector_result
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +61,14 @@ class ProofLayerMCPWrapper:
         config: Optional[Dict[str, Any]] = None,
         config_path: Optional[str] = None,
         detection_rules_dir: Optional[str] = None,
-        action_on_threat: str = "block",
+        action_on_threat: Optional[str] = None,
         report_dir: Optional[str] = None,
         scan_tool_descriptions: bool = True,
         scan_tool_outputs: bool = True,
         fail_closed: bool = True,
+        detector_client: Optional[Any] = None,
+        detector_url: Optional[str] = None,
+        detector_timeout_ms: Optional[int] = None,
     ):
         """
         Initialize the MCP wrapper.
@@ -79,6 +82,9 @@ class ProofLayerMCPWrapper:
             scan_tool_descriptions: Scan tool descriptions for prompt injection
             scan_tool_outputs: Scan tool outputs before returning to LLM
             fail_closed: Block all requests if rules fail to load (default True)
+            detector_client: Optional pre-built external detector client
+            detector_url: Optional prooflayer-detector API URL
+            detector_timeout_ms: Optional detector request timeout
         """
         if not _check_mcp_available():
             raise MCPDependencyError(
@@ -100,10 +106,17 @@ class ProofLayerMCPWrapper:
 
         if detection_rules_dir:
             detection_cfg["rules_dir"] = detection_rules_dir
-        if action_on_threat:
+        if action_on_threat is not None:
             response_cfg["on_threat"] = action_on_threat
         if report_dir:
             response_cfg["report_dir"] = report_dir
+        if detector_url:
+            detector_cfg = self.config.setdefault("detector", {})
+            detector_cfg["url"] = detector_url
+            detector_cfg["enabled"] = True
+        if detector_timeout_ms is not None:
+            detector_cfg = self.config.setdefault("detector", {})
+            detector_cfg["timeout_ms"] = detector_timeout_ms
 
         detection_cfg["fail_closed"] = fail_closed
 
@@ -125,6 +138,7 @@ class ProofLayerMCPWrapper:
             default_action=response_cfg.get("on_threat", "block"),
             reporter=self.reporter,
         )
+        self.detector_client = detector_client or self._build_detector_client()
 
         logger.info(
             "ProofLayer MCP wrapper initialized with %d rules",
@@ -149,7 +163,22 @@ class ProofLayerMCPWrapper:
                 "report_dir": "./security-reports",
                 "alert_webhook": None,
             },
+            "detector": {
+                "enabled": False,
+                "url": "http://127.0.0.1:8088",
+                "timeout_ms": 250,
+            },
         }
+
+    def _build_detector_client(self) -> Optional[ExternalDetectorClient]:
+        """Build optional external detector client from configuration."""
+        detector_cfg = self.config.get("detector", {})
+        if not detector_cfg.get("enabled", False):
+            return None
+        return ExternalDetectorClient(
+            base_url=detector_cfg.get("url", "http://127.0.0.1:8088"),
+            timeout_ms=detector_cfg.get("timeout_ms", 250),
+        )
 
     def wrap(self, server: Any) -> Any:
         """
@@ -211,10 +240,20 @@ class ProofLayerMCPWrapper:
                     arguments = arguments or {}
 
                     # --- Input scanning ---
-                    risk_score, matched_rules = wrapper_self.detection_engine.scan(
+                    result = wrapper_self.detection_engine.scan(
                         tool_name=name,
                         arguments=arguments,
                     )
+                    detector_result = None
+                    if wrapper_self.detector_client:
+                        detector_result = wrapper_self.detector_client.scan(
+                            tool_name=name,
+                            arguments=arguments,
+                            metadata={"surface": "mcp_sdk"},
+                        )
+                    result = apply_detector_result(result, detector_result)
+                    risk_score = result.score
+                    matched_rules = result.matched_rules
 
                     action = wrapper_self.response_action.decide_action(risk_score)
 
