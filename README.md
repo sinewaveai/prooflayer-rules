@@ -1,12 +1,16 @@
 # ProofLayer Runtime
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+
 ProofLayer Runtime is the open runtime security layer for MCP servers. It sits
 on the tool-call path, scans MCP requests with local rules, and can warn, block,
 or stop dangerous calls before they reach the underlying server.
 
-The runtime works by itself in rules-only mode. It can also call the proprietary
+The runtime works by itself in rules-only mode. It can also call the
 `prooflayer-detector` service over `/v1/detect` for model-backed scoring of
-ambiguous events.
+ambiguous events. The model-backed scoring tier is a separate commercial
+offering; see [proof-layer.com](https://www.proof-layer.com).
 
 ## What This Repo Contains
 
@@ -187,6 +191,18 @@ python3 -m pytest -q -p no:cacheprovider \
 - Add public benchmark datasets for false-positive and attack-coverage tracking.
 - Keep air-gap model deployment as a later enterprise roadmap item.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). New detection rules especially welcome — see the new-rule checklist there.
+
+## Security
+
+Found a vulnerability? See [SECURITY.md](SECURITY.md). Please do not open a public issue.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
+
 ## License
 
-Proprietary License. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE).

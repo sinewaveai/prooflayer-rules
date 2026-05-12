@@ -13,17 +13,17 @@ readme_file = Path(__file__).parent / "README.md"
 long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
-    name="prooflayer-runtime",
+    name="prooflayer-rules",
     version="0.1.0",
-    description="Runtime prompt injection firewall for MCP servers",
+    description="Open-source runtime security rules engine for MCP servers and AI agents",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Sinewave AI",
-    author_email="divya@sinewave.ai",
+    author_email="founders@sinewaveai.com",
     url="https://www.proof-layer.com",
     project_urls={
-        "GitHub": "https://github.com/sinewaveai/prooflayer-runtime",
-        "Issues": "https://github.com/sinewaveai/agent-security-scanner-mcp/issues",
+        "GitHub": "https://github.com/sinewaveai/prooflayer-rules",
+        "Issues": "https://github.com/sinewaveai/prooflayer-rules/issues",
     },
     packages=find_packages(),
     package_data={
@@ -58,7 +58,7 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "License :: Other/Proprietary License",
+        "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -66,6 +66,6 @@ setup(
         "Topic :: Security",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    keywords="mcp security runtime firewall prompt-injection ai-agents",
-    license="Proprietary",
+    keywords="mcp security runtime firewall prompt-injection ai-agents ai-security",
+    license="Apache-2.0",
 )
