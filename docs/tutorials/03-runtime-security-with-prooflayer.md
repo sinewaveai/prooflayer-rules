@@ -22,7 +22,7 @@ ProofLayer Runtime Security acts as a transparent HTTP proxy between your MCP cl
 ## Step 1: Install ProofLayer
 
 ```bash
-pip install prooflayer-runtime
+pip install prooflayer-rules
 ```
 
 Verify the installation:
@@ -211,7 +211,7 @@ Each report includes the threat type, tool name, arguments, risk score, matched 
 
 ## Configuration
 
-ProofLayer can be configured via a `prooflayer.yaml` file. See the [Configuration Reference](https://github.com/prooflayer/prooflayer-runtime/blob/main/docs/configuration.md) for details on:
+ProofLayer can be configured via a `prooflayer.yaml` file. See the [Configuration Reference](https://github.com/sinewaveai/prooflayer-rules/blob/main/docs/configuration.md) for details on:
 
 - Custom detection rules
 - Score thresholds (ALLOW/WARN/BLOCK/KILL)
