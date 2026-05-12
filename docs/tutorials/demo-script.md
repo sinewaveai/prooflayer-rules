@@ -17,7 +17,7 @@ Step-by-step demo showing ProofLayer blocking three real-world attack scenarios 
 ### 1. Install ProofLayer
 
 ```bash
-pip install prooflayer-runtime
+pip install prooflayer-rules
 ```
 
 ### 2. Start simple-mcp (backend on port 8081)
