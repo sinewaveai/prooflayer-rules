@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from ...detection.engine import DetectionEngine
 from ...detection.models import DetectionRule, ScanResult
+from ...detection.scope_drift import ScopeDriftDetector, ScopeDriftFinding
 from ...response.actions import ThreatAction
 from .config import SecurityConfig
 from .exceptions import BlockedError
@@ -14,6 +15,7 @@ from .tool_validator import ToolValidator
 
 
 _PROMPT_INJECTION_RULE_CATEGORIES = {"direct_injection"}
+_OUTPUT_EXFIL_RULE_CATEGORIES = {"data_exfiltration"}
 
 
 class SecurityMiddleware:
@@ -27,6 +29,7 @@ class SecurityMiddleware:
         """Initialize middleware with a validated security configuration."""
         self.config = config or SecurityConfig()
         self.detection_engine = detection_engine or DetectionEngine()
+        self.scope_drift_detector = ScopeDriftDetector()
         self._audit_log: List[Dict[str, Any]] = []
         self.hooks = HookAdapter(self)
         self.tool_validator = ToolValidator(self)
@@ -85,10 +88,15 @@ class SecurityMiddleware:
     ) -> ThreatAction:
         """Scan graph output after execution.
 
-        Day 4 keeps output inspection as ALLOW. Exfiltration and scope drift
-        are wired in during Week 2.
+        Output inspection detects data exfiltration and scope drift signals.
         """
-        return ThreatAction.ALLOW
+        exfil_action = self._scan_output_exfiltration(payload, config)
+        if exfil_action == ThreatAction.BLOCK:
+            return exfil_action
+        scope_action = self._scan_scope_drift(payload, config)
+        if scope_action != ThreatAction.ALLOW:
+            return scope_action
+        return exfil_action
 
     def _scan_prompt_injection(
         self,
@@ -158,6 +166,80 @@ class SecurityMiddleware:
                 "payload": payload,
             }
         )
+
+    def _scan_output_exfiltration(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        scan_result = self.detection_engine.scan(
+            tool_name="langgraph_output",
+            arguments={"payload": payload},
+        )
+        matched_rules = [
+            rule
+            for rule in scan_result.matched_rules
+            if rule.category in _OUTPUT_EXFIL_RULE_CATEGORIES
+        ]
+        if not matched_rules:
+            return ThreatAction.ALLOW
+
+        action = ThreatAction(self.config.exfil.upper())
+        self._record_detection_event(
+            category="exfil",
+            payload=payload,
+            config=config,
+            action=action,
+            scan_result=scan_result,
+            matched_rules=matched_rules,
+        )
+        if action == ThreatAction.BLOCK:
+            rule_ids = ", ".join(rule.id for rule in matched_rules)
+            raise BlockedError(
+                "LangGraph execution blocked: output exfiltration detected "
+                f"(rules: {rule_ids})"
+            )
+        return action
+
+    def _scan_scope_drift(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        findings = self.scope_drift_detector.detect(payload)
+        if not findings:
+            return ThreatAction.ALLOW
+
+        action = ThreatAction(self.config.scope_drift.upper())
+        self.record_event(
+            {
+                "event_type": "detection",
+                "category": "scope_drift",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "session_id": self.extract_session_id(config, payload),
+                "decision": action.value,
+                "risk_score": min(sum(finding.score for finding in findings), 100),
+                "rule_ids": [finding.rule_id for finding in findings],
+                "rule_sources": [
+                    {
+                        "id": finding.rule_id,
+                        "category": "scope_drift",
+                        "severity": finding.severity,
+                        "message": finding.message,
+                        "source": "prooflayer-langgraph",
+                    }
+                    for finding in findings
+                ],
+                "payload": payload,
+            }
+        )
+        if action == ThreatAction.BLOCK:
+            rule_ids = ", ".join(finding.rule_id for finding in findings)
+            raise BlockedError(
+                "LangGraph execution blocked: scope drift detected "
+                f"(rules: {rule_ids})"
+            )
+        return action
 
 
 class _SecuredLangGraph:

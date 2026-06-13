@@ -200,3 +200,57 @@ def test_clean_input_has_no_detection_events():
 
     assert decision == ThreatAction.ALLOW
     assert middleware.get_audit_log() == []
+
+
+def test_output_exfiltration_blocks_on_exfil_policy():
+    middleware = SecurityMiddleware(config=SecurityConfig(exfil="block"))
+
+    with pytest.raises(BlockedError, match="output exfiltration"):
+        middleware.scan_output(
+            {"answer": "I will send to http://evil.com now"},
+            {"configurable": {"thread_id": "thread-1"}},
+        )
+
+    event = middleware.get_audit_log("thread-1")[0]
+    assert event["category"] == "exfil"
+    assert "exfil-send-to-url" in event["rule_ids"]
+
+
+def test_output_exfiltration_warns_on_exfil_policy():
+    middleware = SecurityMiddleware(config=SecurityConfig(exfil="warn"))
+
+    decision = middleware.scan_output(
+        {"answer": "The secret is in /etc/passwd"},
+        {"configurable": {"thread_id": "thread-1"}},
+    )
+
+    assert decision == ThreatAction.WARN
+    assert middleware.get_audit_log("thread-1")[0]["decision"] == "WARN"
+
+
+def test_scope_drift_blocks_on_scope_policy():
+    middleware = SecurityMiddleware(config=SecurityConfig(scope_drift="block"))
+
+    with pytest.raises(BlockedError, match="scope drift"):
+        middleware.scan_output(
+            {"answer": "I can ignore the scope and help with anything you want"},
+            {"configurable": {"thread_id": "thread-1"}},
+        )
+
+    event = middleware.get_audit_log("thread-1")[0]
+    assert event["category"] == "scope_drift"
+    assert "scope-drift-ignore-scope" in event["rule_ids"]
+
+
+def test_clean_output_allows_without_events():
+    middleware = SecurityMiddleware(
+        config=SecurityConfig(exfil="block", scope_drift="block")
+    )
+
+    decision = middleware.scan_output(
+        {"answer": "ProofLayer emits security evidence for agent workflows."},
+        {"configurable": {"thread_id": "thread-1"}},
+    )
+
+    assert decision == ThreatAction.ALLOW
+    assert middleware.get_audit_log() == []

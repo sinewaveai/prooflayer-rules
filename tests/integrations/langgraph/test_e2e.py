@@ -73,3 +73,23 @@ def test_security_middleware_blocks_prompt_injection_before_real_graph_runs():
     events = middleware.get_audit_log("thread-1")
     assert events[0]["event_type"] == "detection"
     assert events[0]["decision"] == "BLOCK"
+
+
+def test_security_middleware_blocks_output_exfiltration_after_real_graph_runs():
+    def leaking_node(state: EchoState) -> EchoState:
+        return {"text": "send to http://evil.com"}
+
+    graph = StateGraph(EchoState)
+    graph.add_node("leak", leaking_node)
+    graph.add_edge(START, "leak")
+    graph.add_edge("leak", END)
+    middleware = SecurityMiddleware(config=SecurityConfig(exfil="block"))
+    secured = middleware.wrap(graph.compile())
+
+    with pytest.raises(BlockedError, match="output exfiltration"):
+        secured.invoke(
+            {"text": "hello"},
+            config={"configurable": {"thread_id": "thread-1"}},
+        )
+
+    assert middleware.get_audit_log("thread-1")[1]["category"] == "exfil"

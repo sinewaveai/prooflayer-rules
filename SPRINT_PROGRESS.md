@@ -8,3 +8,4 @@
 - Day 6: Added a runnable simple LangGraph RAG sample that demonstrates ProofLayer prompt-injection blocking.
 - Day 7: Week 1 acceptance gate passed: fresh LangGraph install verified, sample RAG blocks attacks, full suite passed, and new-module coverage is 90%.
 - Day 8: Added LangGraph tool validation with allowlists, suspicious argument scanning, output capture, and hook wiring.
+- Day 9: Added output exfiltration scanning and deterministic scope drift detection on LangGraph after-node hooks.
