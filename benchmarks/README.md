@@ -4,6 +4,7 @@ This directory contains two benchmark suites:
 
 - **`run_benchmarks.py`** — detection-quality benchmark. Runs OWASP LLM01 prompt-injection fixtures and the local malicious / benign fixtures through the engine and reports detection rate and false-positive rate.
 - **`latency.py`** — per-scan latency benchmark. Runs a 40/30/30 mix of benign / suspicious / attack inputs through the detection engine and reports p50 / p95 / p99 latency.
+- **`langgraph_latency.py`** — secured LangGraph hot-path benchmark. Runs a compiled one-node LangGraph through `SecurityMiddleware` and reports p50 / p95 / p99 invocation latency.
 
 ## Run
 
@@ -15,6 +16,10 @@ python3 benchmarks/run_benchmarks.py
 python3 benchmarks/latency.py            # 10k scans, text output
 python3 benchmarks/latency.py --json     # JSON output
 python3 benchmarks/latency.py --n 50000  # larger sample
+
+# LangGraph hot path
+python3 benchmarks/langgraph_latency.py        # 200 secured invokes
+python3 benchmarks/langgraph_latency.py --json
 ```
 
 ## Results — v0.1.0 release tag
@@ -47,8 +52,29 @@ Captured on **2026-05-12** against the v0.1.0 release tag.
 | Throughput      | ~442 scans/s |
 | Wall time       | 22.6 s     |
 
+## Results — v0.2.0 LangGraph sprint
+
+Captured on **2026-06-13** during the v0.2.0 LangGraph sprint.
+
+**Hardware:** Apple Silicon workstation, macOS Darwin, Python 3.12.12.
+
+### LangGraph hot path (`benchmarks/langgraph_latency.py --n 200 --json`)
+
+200 secured invokes against a compiled one-node LangGraph, with ProofLayer input and output checks enabled.
+
+| Metric          | Value      |
+| --------------- | ---------- |
+| p50 latency     | 30.40 ms   |
+| p95 latency     | 32.17 ms   |
+| p99 latency     | 32.72 ms   |
+| Mean latency    | 30.33 ms   |
+| Max latency     | 33.05 ms   |
+| Throughput      | ~33 invokes/s |
+| Wall time       | 6.07 s     |
+
 ## Notes
 
 - The hot path is synchronous regex + heuristic matching. For latency-sensitive deployments (voice agents, sub-100 ms paths) the rules layer is the right choice.
+- The LangGraph hot path includes LangGraph invocation overhead plus ProofLayer before/after checks around a representative node.
 - The commercial detector tier (`prooflayer-detector`) is async and recommended for non-hot-path analysis; runtime degrades to rules-only on detector failure.
 - Numbers are workstation-class. Production p99 will vary with rule-set size, payload size, and CPU contention. Re-run on your target hardware before publishing claims.

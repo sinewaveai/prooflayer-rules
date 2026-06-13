@@ -13,7 +13,7 @@ The runtime works by itself in rules-only mode. It can also call the
 ambiguous events. The model-backed scoring tier is a separate commercial
 offering; see [proof-layer.com](https://www.proof-layer.com).
 
-**Hot-path latency: p99 6.23 ms** on the rules layer (10K-scan benchmark, see [`benchmarks/`](benchmarks/)). Sub-100 ms even on conservative hardware.
+**Hot-path latency:** p99 6.23 ms on the rules layer and p99 32.72 ms on a secured LangGraph invocation benchmark (see [`benchmarks/`](benchmarks/)). Both are below the 100 ms sprint budget.
 
 ## What This Repo Contains
 
