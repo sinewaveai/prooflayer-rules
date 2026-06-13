@@ -100,7 +100,7 @@ class ProofLayerRuntime:
             metrics_port = metrics_cfg.get("port", 9090)
             start_metrics_server(port=metrics_port)
 
-        logger.info("ProofLayer Runtime v0.1.0 initialized")
+        logger.info("ProofLayer Runtime v0.2.0 initialized")
         logger.info(f"Detection rules loaded: {len(self.detection_engine.rules)}")
         logger.info(f"Default action on threat: {self.response_action.default_action}")
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] — Unreleased
+## [0.2.0] — 2026-06-13
 
 ### Added
 
@@ -48,3 +48,4 @@ Initial open-source release of ProofLayer's runtime rules layer.
 - The commercial ML scoring tier (`prooflayer-detector`) is a separate offering; this repo is the open rules-only layer plus optional client for that service.
 
 [0.1.0]: https://github.com/sinewaveai/prooflayer-rules/releases/tag/v0.1.0
+[0.2.0]: https://github.com/sinewaveai/prooflayer-rules/releases/tag/v0.2.0

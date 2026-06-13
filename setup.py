@@ -14,7 +14,7 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
     name="prooflayer-rules",
-    version="0.1.0",
+    version="0.2.0",
     description="Open-source runtime security rules engine for MCP servers and AI agents",
     long_description=long_description,
     long_description_content_type="text/markdown",

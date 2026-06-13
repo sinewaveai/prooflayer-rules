@@ -76,7 +76,7 @@ class SecurityReporter:
             scan_timestamp = getattr(scan_result, "timestamp", timestamp_str)
 
         report = {
-            "prooflayer_version": "0.1.0",
+            "prooflayer_version": "0.2.0",
             "timestamp": timestamp_str,
             "threat": {
                 "type": threat_type,
@@ -143,7 +143,7 @@ class SecurityReporter:
                     "tool": {
                         "driver": {
                             "name": "ProofLayer Runtime Security",
-                            "version": "0.1.0",
+                            "version": "0.2.0",
                             "informationUri": "https://www.proof-layer.com"
                         }
                     },

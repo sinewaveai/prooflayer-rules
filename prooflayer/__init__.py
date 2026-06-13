@@ -17,7 +17,7 @@ from .response.killer import ServerKiller
 from .runtime.interceptor import MCPInterceptor
 from .runtime.middleware import ProofLayerMiddleware
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Sinewave AI"
 __license__ = "Apache-2.0"
 
