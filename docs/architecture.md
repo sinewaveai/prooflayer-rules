@@ -214,3 +214,86 @@ For servers built with the official MCP Python SDK, `ProofLayerMCPWrapper` provi
 - **Tool poisoning detection** -- scans `list_tools` descriptions for injected instructions
 
 All three scanning points use the same `DetectionEngine` and scoring pipeline.
+
+## LangGraph Integration
+
+`prooflayer.integrations.langgraph.SecurityMiddleware` wraps compiled LangGraph objects and preserves the normal invocation interface:
+
+- `invoke`
+- `ainvoke`
+- `stream`
+- `astream`
+- `stream_events`
+- `astream_events`
+
+LangGraph hot path:
+
+```
+User input
+   |
+   v
+SecurityMiddleware.before_node("__graph__")
+   |
+   +--> DetectionEngine rules: prompt injection, jailbreak, tool abuse, exfil
+   +--> StateManipulationDetector for state-like inputs
+   +--> MultiTurnDetector keyed by thread_id/session_id
+   |
+   v
+Compiled LangGraph executes
+   |
+   v
+SecurityMiddleware.after_node("__graph__")
+   |
+   +--> DetectionEngine output exfil checks
+   +--> ScopeDriftDetector
+   |
+   v
+Secured result or BlockedError
+```
+
+Tool-level hooks are available for graph nodes that call tools:
+
+```
+LangGraph tool node
+   |
+   v
+middleware.hooks.on_tool_call(tool_name, tool_args)
+   |
+   +--> Tool allowlist
+   +--> Argument exfil and tool-abuse inspection
+   |
+   v
+Tool executes or BlockedError
+```
+
+Streaming output is filtered chunk by chunk. Critical detections either raise `BlockedError` or replace the chunk with the configured blocked token.
+
+## Evals and Compliance
+
+The eval layer normalizes findings from three sources:
+
+- ProofLayer built-in adversarial probes
+- GARAK Docker runner
+- PromptFoo Docker runner
+
+Eval reports can be rendered as JSON and Markdown.
+
+The compliance layer maps runtime events and eval reports into framework controls:
+
+```
+Detection event / eval report
+   |
+   v
+ComplianceEmitter
+   |
+   +--> NIST AI RMF
+   +--> EU AI Act Articles 13-15
+   +--> SOC 2 CC6/CC7
+   +--> HIPAA Security Rule
+   |
+   v
+EvidenceRecord with sha256 chain hash
+   |
+   v
+Markdown / optional PDF report
+```

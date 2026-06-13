@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — Unreleased
+
+### Added
+
+- **LangGraph integration** — `prooflayer.integrations.langgraph.SecurityMiddleware` wraps compiled LangGraph agents and supports sync, async, streaming, tool-call, state-update, and audit-log paths.
+- **Runtime detection categories for LangGraph** — prompt injection, jailbreak, tool abuse, output/input exfiltration, scope drift, state manipulation, multi-turn slow-burn attacks, and streaming output filtering.
+- **Adversarial evals** — `prooflayer.evals` adds a 30-probe built-in LangGraph suite, GARAK Docker runner, PromptFoo Docker runner, LangGraph target adapter, and JSON/Markdown findings reports.
+- **Compliance evidence** — `prooflayer.compliance` adds NIST AI RMF, EU AI Act, SOC 2, and HIPAA framework registries, event-to-control mapping, hashed evidence records, Markdown reports, and optional PDF output.
+- **Audit logging** — `prooflayer.audit` emits structured events with sha256 chain-of-custody hashes and SIEM-compatible JSON.
+- **Examples** — five LangGraph examples covering RAG, tool calling, multi-agent supervision, memory attacks, and production compliance reporting.
+
+### Notes
+
+- ProofLayer is positioned as complementary to LangSmith: LangSmith covers tracing and generic evals; ProofLayer covers adversarial evals, runtime security, and compliance evidence.
+- v0.1.0 MCP runtime and proxy integrations remain supported.
+
 ## [0.1.0] — 2026-05-12
 
 Initial open-source release of ProofLayer's runtime rules layer.

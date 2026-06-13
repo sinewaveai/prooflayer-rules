@@ -15,3 +15,4 @@
 - Day 15: Added NIST AI RMF, EU AI Act, SOC 2, and HIPAA compliance framework registries with 20 AI-applicable controls each and schema tests.
 - Day 16: Added compliance evidence records, deterministic event-to-control mapping, Markdown report generation, optional PDF rendering, and tests.
 - Day 17: Added four additional LangGraph sample apps for tool validation, multi-agent state monitoring, multi-turn memory attacks, and production compliance reporting.
+- Day 18: Added LangGraph integration, evals, compliance, architecture, and API docs; updated README positioning and CHANGELOG for v0.2.0.

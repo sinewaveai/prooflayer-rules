@@ -3,9 +3,10 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
-ProofLayer Runtime is the open runtime security layer for MCP servers. It sits
-on the tool-call path, scans MCP requests with local rules, and can warn, block,
-or stop dangerous calls before they reach the underlying server.
+ProofLayer Runtime is the open runtime security layer for MCP servers and
+LangGraph agents. It sits on the tool-call or agent-execution path, scans
+requests with local rules, and can warn, block, or stop dangerous actions before
+they reach the underlying server, tool, state update, or output stream.
 
 The runtime works by itself in rules-only mode. It can also call the
 `prooflayer-detector` service over `/v1/detect` for model-backed scoring of
@@ -18,6 +19,13 @@ offering; see [proof-layer.com](https://www.proof-layer.com).
 
 - Local MCP runtime wrappers for synchronous and MCP Python SDK servers.
 - HTTP proxy transport for JSON-RPC `tools/call` traffic.
+- LangGraph runtime wrapper with prompt injection, jailbreak, tool abuse,
+  exfiltration, scope drift, state manipulation, multi-turn, and streaming
+  checks.
+- Adversarial evals for LangGraph agents through a built-in suite, GARAK, and
+  PromptFoo.
+- Compliance evidence mapped to NIST AI RMF, EU AI Act Articles 13-15, SOC 2
+  CC6/CC7, and HIPAA Security Rule.
 - YAML detection rules for prompt injection, jailbreaks, command injection,
   data exfiltration, role manipulation, tool poisoning, SSRF/XXE, and SQL
   injection.
@@ -77,6 +85,53 @@ Install MCP Python SDK support:
 ```bash
 pip install -e ".[mcp]"
 ```
+
+Install LangGraph support:
+
+```bash
+pip install -e ".[langgraph]"
+```
+
+Install everything:
+
+```bash
+pip install -e ".[all]"
+```
+
+## LangGraph Security Layer
+
+ProofLayer is complementary to LangGraph and LangSmith:
+
+| Layer | What it does | Provided by |
+|---|---|---|
+| Agent orchestration | Build, deploy, run agents | LangGraph |
+| Tracing + observability | See what agents did | LangSmith |
+| Generic evals | LLM-as-judge, regression tests | LangSmith |
+| Adversarial evals | GARAK / PromptFoo red-team probes | ProofLayer |
+| Runtime security | Real-time prompt injection, tool abuse, exfil detection + blocking | ProofLayer |
+| Compliance evidence | NIST AI RMF / EU AI Act / SOC 2 / HIPAA audit-defensible reports | ProofLayer |
+
+Three-line integration:
+
+```python
+from prooflayer.integrations.langgraph import SecurityConfig, SecurityMiddleware
+
+middleware = SecurityMiddleware(SecurityConfig(prompt_injection="block"))
+secured_graph = middleware.wrap(graph.compile())
+result = secured_graph.invoke({"input": user_input})
+```
+
+Run the examples:
+
+```bash
+python examples/integrations/langgraph/01_simple_rag.py
+python examples/integrations/langgraph/02_tool_calling_agent.py
+python examples/integrations/langgraph/03_multi_agent_supervisor.py
+python examples/integrations/langgraph/04_memory_attack_demo.py
+python examples/integrations/langgraph/05_production_template.py
+```
+
+See [docs/integrations/langgraph.md](docs/integrations/langgraph.md), [docs/evals.md](docs/evals.md), and [docs/compliance.md](docs/compliance.md).
 
 ## Verify Locally
 
