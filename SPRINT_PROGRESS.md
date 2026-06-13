@@ -14,3 +14,4 @@
 - Day 12-13: Added adversarial evals with GARAK and PromptFoo Docker runners, LangGraph target adaptation, a 30-probe built-in suite, JSON/Markdown reports, and a local eval example.
 - Day 15: Added NIST AI RMF, EU AI Act, SOC 2, and HIPAA compliance framework registries with 20 AI-applicable controls each and schema tests.
 - Day 16: Added compliance evidence records, deterministic event-to-control mapping, Markdown report generation, optional PDF rendering, and tests.
+- Day 17: Added four additional LangGraph sample apps for tool validation, multi-agent state monitoring, multi-turn memory attacks, and production compliance reporting.

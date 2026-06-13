@@ -11,7 +11,6 @@ from prooflayer.integrations.langgraph import (
     SecurityMiddleware,
 )
 
-
 DOCS = {
     "runtime": "ProofLayer scans agent inputs and tool calls at runtime.",
     "audit": "ProofLayer emits audit evidence with rule IDs and timestamps.",
