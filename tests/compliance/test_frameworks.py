@@ -6,7 +6,6 @@ import yaml
 
 import prooflayer.compliance.frameworks as frameworks
 
-
 REQUIRED_CONTROL_FIELDS = {
     "id",
     "title",
