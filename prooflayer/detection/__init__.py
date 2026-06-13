@@ -9,6 +9,8 @@ from .scanner import PatternScanner
 from .scorer import RiskScorer
 from .semantic import SemanticAnalyzer
 from .scope_drift import ScopeDriftDetector, ScopeDriftFinding
+from .state_manipulation import StateManipulationDetector, StateManipulationFinding
+from .multi_turn import MultiTurnDetector, MultiTurnFinding
 
 __all__ = [
     "DetectionEngine",
@@ -21,6 +23,10 @@ __all__ = [
     "SemanticAnalyzer",
     "ScopeDriftDetector",
     "ScopeDriftFinding",
+    "StateManipulationDetector",
+    "StateManipulationFinding",
+    "MultiTurnDetector",
+    "MultiTurnFinding",
     "normalize_text",
     "flatten_arguments",
     "apply_detector_result",

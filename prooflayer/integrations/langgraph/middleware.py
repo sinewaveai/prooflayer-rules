@@ -6,7 +6,9 @@ from typing import Any, Dict, List, Optional
 
 from ...detection.engine import DetectionEngine
 from ...detection.models import DetectionRule, ScanResult
+from ...detection.multi_turn import MultiTurnDetector
 from ...detection.scope_drift import ScopeDriftDetector, ScopeDriftFinding
+from ...detection.state_manipulation import StateManipulationDetector
 from ...response.actions import ThreatAction
 from .config import SecurityConfig
 from .exceptions import BlockedError
@@ -30,6 +32,8 @@ class SecurityMiddleware:
         self.config = config or SecurityConfig()
         self.detection_engine = detection_engine or DetectionEngine()
         self.scope_drift_detector = ScopeDriftDetector()
+        self.state_manipulation_detector = StateManipulationDetector()
+        self.multi_turn_detector = MultiTurnDetector()
         self._audit_log: List[Dict[str, Any]] = []
         self.hooks = HookAdapter(self)
         self.tool_validator = ToolValidator(self)
@@ -79,7 +83,13 @@ class SecurityMiddleware:
 
         Prompt injection detection is active on the node-entry hot path.
         """
-        return self._scan_prompt_injection(payload, config)
+        prompt_action = self._scan_prompt_injection(payload, config)
+        if prompt_action == ThreatAction.BLOCK:
+            return prompt_action
+        multi_turn_action = self._scan_multi_turn(payload, config)
+        if multi_turn_action != ThreatAction.ALLOW:
+            return multi_turn_action
+        return prompt_action
 
     def scan_output(
         self,
@@ -97,6 +107,32 @@ class SecurityMiddleware:
         if scope_action != ThreatAction.ALLOW:
             return scope_action
         return exfil_action
+
+    def scan_state_update(
+        self,
+        state_update: Dict[str, Any],
+        config: Optional[Dict[str, Any]] = None,
+    ) -> ThreatAction:
+        """Scan LangGraph state updates for memory or prompt manipulation."""
+        findings = self.state_manipulation_detector.detect(state_update)
+        if not findings:
+            return ThreatAction.ALLOW
+
+        action = ThreatAction(self.config.state_manipulation.upper())
+        self._record_finding_event(
+            category="state_manipulation",
+            payload=state_update,
+            config=config,
+            action=action,
+            findings=findings,
+        )
+        if action == ThreatAction.BLOCK:
+            rule_ids = ", ".join(finding.rule_id for finding in findings)
+            raise BlockedError(
+                "LangGraph execution blocked: state manipulation detected "
+                f"(rules: {rule_ids})"
+            )
+        return action
 
     def _scan_prompt_injection(
         self,
@@ -211,10 +247,59 @@ class SecurityMiddleware:
             return ThreatAction.ALLOW
 
         action = ThreatAction(self.config.scope_drift.upper())
+        self._record_finding_event(
+            category="scope_drift",
+            payload=payload,
+            config=config,
+            action=action,
+            findings=findings,
+        )
+        if action == ThreatAction.BLOCK:
+            rule_ids = ", ".join(finding.rule_id for finding in findings)
+            raise BlockedError(
+                "LangGraph execution blocked: scope drift detected "
+                f"(rules: {rule_ids})"
+            )
+        return action
+
+    def _scan_multi_turn(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        session_id = self.extract_session_id(config, payload) or "__default__"
+        findings = self.multi_turn_detector.detect(session_id, payload)
+        if not findings:
+            return ThreatAction.ALLOW
+
+        action = ThreatAction(self.config.multi_turn.upper())
+        self._record_finding_event(
+            category="multi_turn",
+            payload=payload,
+            config=config,
+            action=action,
+            findings=findings,
+        )
+        if action == ThreatAction.BLOCK:
+            rule_ids = ", ".join(finding.rule_id for finding in findings)
+            raise BlockedError(
+                "LangGraph execution blocked: multi-turn attack detected "
+                f"(rules: {rule_ids})"
+            )
+        return action
+
+    def _record_finding_event(
+        self,
+        category: str,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+        action: ThreatAction,
+        findings: List[Any],
+    ) -> None:
         self.record_event(
             {
                 "event_type": "detection",
-                "category": "scope_drift",
+                "category": category,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "session_id": self.extract_session_id(config, payload),
                 "decision": action.value,
@@ -223,7 +308,7 @@ class SecurityMiddleware:
                 "rule_sources": [
                     {
                         "id": finding.rule_id,
-                        "category": "scope_drift",
+                        "category": category,
                         "severity": finding.severity,
                         "message": finding.message,
                         "source": "prooflayer-langgraph",
@@ -233,13 +318,6 @@ class SecurityMiddleware:
                 "payload": payload,
             }
         )
-        if action == ThreatAction.BLOCK:
-            rule_ids = ", ".join(finding.rule_id for finding in findings)
-            raise BlockedError(
-                "LangGraph execution blocked: scope drift detected "
-                f"(rules: {rule_ids})"
-            )
-        return action
 
 
 class _SecuredLangGraph:

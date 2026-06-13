@@ -81,7 +81,7 @@ class HookAdapter:
         config: Optional[Dict[str, Any]] = None,
     ) -> ThreatAction:
         """Run when LangGraph state is updated."""
-        decision = self.middleware.scan_input(state_update, config)
+        decision = self.middleware.scan_state_update(state_update, config)
         self._record("state_update", node_name, state_update, decision, config)
         return decision
 
