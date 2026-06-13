@@ -17,3 +17,4 @@
 - Day 17: Added four additional LangGraph sample apps for tool validation, multi-agent state monitoring, multi-turn memory attacks, and production compliance reporting.
 - Day 18: Added LangGraph integration, evals, compliance, architecture, and API docs; updated README positioning and CHANGELOG for v0.2.0.
 - Day 19: Added a LangGraph hot-path latency benchmark and recorded p99 32.72 ms for secured graph invocation, under the 100 ms budget.
+- Day 20: Added community launch artifacts: blog draft, HN submission, Twitter/X thread, LinkedIn post, LangChain DevRel email, and demo video script.
