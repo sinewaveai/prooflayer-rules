@@ -49,6 +49,16 @@ setup(
             "langgraph>=0.2.0,<1.0.0",
             "langchain-core>=0.3.0",
         ],
+        "evals": [
+            "docker>=7.0.0",
+            "pyyaml>=6.0.0",
+        ],
+        "all": [
+            "langgraph>=0.2.0,<1.0.0",
+            "langchain-core>=0.3.0",
+            "docker>=7.0.0",
+            "pyyaml>=6.0.0",
+        ],
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",

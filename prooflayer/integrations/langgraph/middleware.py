@@ -16,8 +16,15 @@ from .hooks import HookAdapter
 from .streaming import StreamingFilter
 from .tool_validator import ToolValidator
 
-
 _PROMPT_INJECTION_RULE_CATEGORIES = {"direct_injection"}
+_JAILBREAK_RULE_CATEGORIES = {"jailbreak", "role_manipulation"}
+_TOOL_ABUSE_RULE_CATEGORIES = {
+    "command_injection",
+    "sql_injection",
+    "ssrf_xxe",
+    "tool_poisoning",
+}
+_INPUT_EXFIL_RULE_CATEGORIES = {"data_exfiltration"}
 _OUTPUT_EXFIL_RULE_CATEGORIES = {"data_exfiltration"}
 
 
@@ -49,9 +56,7 @@ class SecurityMiddleware:
         if session_id is None:
             return list(self._audit_log)
         return [
-            event
-            for event in self._audit_log
-            if event.get("session_id") == session_id
+            event for event in self._audit_log if event.get("session_id") == session_id
         ]
 
     def record_event(self, event: Dict[str, Any]) -> None:
@@ -85,13 +90,30 @@ class SecurityMiddleware:
 
         Prompt injection detection is active on the node-entry hot path.
         """
-        prompt_action = self._scan_prompt_injection(payload, config)
-        if prompt_action == ThreatAction.BLOCK:
-            return prompt_action
+        input_actions = [
+            self._scan_prompt_injection(payload, config),
+            self._scan_jailbreak(payload, config),
+            self._scan_tool_abuse_input(payload, config),
+            self._scan_input_exfiltration(payload, config),
+            (
+                self.scan_state_update(payload, config)
+                if isinstance(payload, dict)
+                else ThreatAction.ALLOW
+            ),
+        ]
+        blocking_action = next(
+            (action for action in input_actions if action == ThreatAction.BLOCK),
+            None,
+        )
+        if blocking_action is not None:
+            return blocking_action
         multi_turn_action = self._scan_multi_turn(payload, config)
         if multi_turn_action != ThreatAction.ALLOW:
             return multi_turn_action
-        return prompt_action
+        return next(
+            (action for action in input_actions if action != ThreatAction.ALLOW),
+            ThreatAction.ALLOW,
+        )
 
     def scan_output(
         self,
@@ -141,6 +163,66 @@ class SecurityMiddleware:
         payload: Any,
         config: Optional[Dict[str, Any]],
     ) -> ThreatAction:
+        return self._scan_rule_categories(
+            category="prompt_injection",
+            rule_categories=_PROMPT_INJECTION_RULE_CATEGORIES,
+            configured_action=self.config.prompt_injection,
+            block_message="LangGraph execution blocked: prompt injection detected",
+            payload=payload,
+            config=config,
+        )
+
+    def _scan_jailbreak(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        return self._scan_rule_categories(
+            category="jailbreak",
+            rule_categories=_JAILBREAK_RULE_CATEGORIES,
+            configured_action=self.config.jailbreak,
+            block_message="LangGraph execution blocked: jailbreak detected",
+            payload=payload,
+            config=config,
+        )
+
+    def _scan_tool_abuse_input(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        return self._scan_rule_categories(
+            category="tool_abuse",
+            rule_categories=_TOOL_ABUSE_RULE_CATEGORIES,
+            configured_action=self.config.tool_abuse,
+            block_message="LangGraph execution blocked: tool abuse detected",
+            payload=payload,
+            config=config,
+        )
+
+    def _scan_input_exfiltration(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        return self._scan_rule_categories(
+            category="exfil",
+            rule_categories=_INPUT_EXFIL_RULE_CATEGORIES,
+            configured_action=self.config.exfil,
+            block_message="LangGraph execution blocked: exfiltration attempt detected",
+            payload=payload,
+            config=config,
+        )
+
+    def _scan_rule_categories(
+        self,
+        category: str,
+        rule_categories: set[str],
+        configured_action: str,
+        block_message: str,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
         scan_result = self.detection_engine.scan(
             tool_name="langgraph_input",
             arguments={"payload": payload},
@@ -148,15 +230,14 @@ class SecurityMiddleware:
         matched_rules = [
             rule
             for rule in scan_result.matched_rules
-            if rule.category in _PROMPT_INJECTION_RULE_CATEGORIES
+            if rule.category in rule_categories
         ]
         if not matched_rules:
             return ThreatAction.ALLOW
 
-        configured_action = self.config.prompt_injection
         action = ThreatAction(configured_action.upper())
         self._record_detection_event(
-            category="prompt_injection",
+            category=category,
             payload=payload,
             config=config,
             action=action,
@@ -166,10 +247,7 @@ class SecurityMiddleware:
 
         if action == ThreatAction.BLOCK:
             rule_ids = ", ".join(rule.id for rule in matched_rules)
-            raise BlockedError(
-                "LangGraph execution blocked: prompt injection detected "
-                f"(rules: {rule_ids})"
-            )
+            raise BlockedError(f"{block_message} (rules: {rule_ids})")
 
         return action
 
@@ -361,7 +439,9 @@ class _SecuredLangGraph:
             self._middleware.hooks.after_node("__graph__", filtered_chunk, config)
             yield filtered_chunk
 
-    async def astream(self, input: Any, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
+    async def astream(
+        self, input: Any, *args: Any, **kwargs: Any
+    ) -> AsyncIterator[Any]:
         """Stream graph output asynchronously with security checks around each chunk."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)

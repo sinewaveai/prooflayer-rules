@@ -38,8 +38,19 @@ class StateManipulationDetector:
         (
             "state-manipulation-memory-poisoning",
             "high",
-            re.compile(r"\b(poison|rewrite|replace)\s+(memory|conversation\s+history)\b"),
+            re.compile(
+                r"\b(poison|rewrite|replace|store|save|inject)\s+"
+                r"(a\s+note\s+that\s+)?(memory|conversation\s+history|"
+                r"system\s+prompt|developer\s+prompt|security\s+policy)\b"
+            ),
             "State update attempts to poison memory or conversation history.",
+            30,
+        ),
+        (
+            "state-manipulation-disable-validation",
+            "high",
+            re.compile(r"\b(disable|bypass|skip)\s+(validation|security\s+checks?)\b"),
+            "State update attempts to disable validation or security checks.",
             30,
         ),
     ]

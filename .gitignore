@@ -45,6 +45,7 @@ htmlcov/
 .mypy_cache/
 
 # Security reports (generated at runtime)
+security-reports/
 security-reports/*.json
 security-reports/*.sarif
 

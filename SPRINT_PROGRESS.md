@@ -11,3 +11,4 @@
 - Day 9: Added output exfiltration scanning and deterministic scope drift detection on LangGraph after-node hooks.
 - Day 10: Added state manipulation and multi-turn slow-burn attack detection for LangGraph state and input hooks.
 - Day 11: Added streaming output filtering for stream, astream, stream_events, and astream_events with configurable block handling.
+- Day 12-13: Added adversarial evals with GARAK and PromptFoo Docker runners, LangGraph target adaptation, a 30-probe built-in suite, JSON/Markdown reports, and a local eval example.
