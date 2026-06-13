@@ -6,3 +6,4 @@
 - Day 4: Wired prompt injection detection into LangGraph node-entry scans with allow, warn, and block handling.
 - Day 5: Added structured audit events with sha256 chain-of-custody hashes, JSONL, stdout, and SIEM outputs.
 - Day 6: Added a runnable simple LangGraph RAG sample that demonstrates ProofLayer prompt-injection blocking.
+- Day 7: Week 1 acceptance gate passed: fresh LangGraph install verified, sample RAG blocks attacks, full suite passed, and new-module coverage is 90%.
