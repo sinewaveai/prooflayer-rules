@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/sinewaveai-prooflayer-rules-badge.png)](https://mseep.ai/app/sinewaveai-prooflayer-rules)
+
 # ProofLayer Runtime
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
