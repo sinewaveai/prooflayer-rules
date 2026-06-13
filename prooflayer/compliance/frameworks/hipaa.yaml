@@ -1,0 +1,124 @@
+framework: hipaa
+name: HIPAA Security Rule AI Agent Evidence Map
+version: "2026-ai-applicable-subset"
+controls:
+  - id: hipaa-164-308-a1
+    title: Security management process
+    description: Identify and manage risks to electronic protected health information in AI workflows.
+    evidence_types: [risk_assessment, detection_event]
+    audit_perspective: Verify AI agent risks are included in security management evidence.
+    cross_mappings: [nist-govern-02, nist-map-02]
+  - id: hipaa-164-308-a2
+    title: Assigned security responsibility
+    description: Assign responsibility for AI agent security configuration and evidence review.
+    evidence_types: [policy, configuration]
+    audit_perspective: Confirm an accountable owner exists for runtime security settings.
+    cross_mappings: [soc2-cc6-02]
+  - id: hipaa-164-308-a3
+    title: Workforce access procedure
+    description: Limit workforce-driven agent actions that could expose protected data.
+    evidence_types: [configuration, tool_call_event]
+    audit_perspective: Confirm tool allowlists reduce unauthorized access paths.
+    cross_mappings: [soc2-cc6-06]
+  - id: hipaa-164-308-a4
+    title: Information access management
+    description: Control access to systems and data reachable by AI tools.
+    evidence_types: [configuration, architecture]
+    audit_perspective: Verify tool access boundaries are documented.
+    cross_mappings: [nist-map-04]
+  - id: hipaa-164-308-a5
+    title: Security awareness and training
+    description: Train operators to understand prompt injection and exfiltration risks.
+    evidence_types: [training_record, documentation]
+    audit_perspective: Confirm docs explain unsafe prompt and output patterns.
+    cross_mappings: [eu-ai-act-13-04]
+  - id: hipaa-164-308-a6
+    title: Security incident procedures
+    description: Identify and respond to AI security incidents.
+    evidence_types: [incident_record, detection_event]
+    audit_perspective: Confirm critical detections can support incident triage.
+    cross_mappings: [nist-govern-05, soc2-cc7-04]
+  - id: hipaa-164-308-a7
+    title: Contingency planning
+    description: Define fallback behavior when AI workflow controls fail.
+    evidence_types: [policy, configuration]
+    audit_perspective: Verify block mode can stop unsafe execution.
+    cross_mappings: [eu-ai-act-15-07]
+  - id: hipaa-164-308-a8
+    title: Evaluation
+    description: Perform periodic technical and nontechnical evaluation of AI controls.
+    evidence_types: [eval_report, review_record]
+    audit_perspective: Confirm adversarial eval reports are retained.
+    cross_mappings: [nist-measure-02, soc2-cc7-05]
+  - id: hipaa-164-308-b1
+    title: Business associate controls
+    description: Track third-party AI components and evidence responsibilities.
+    evidence_types: [software_inventory, policy]
+    audit_perspective: Verify OSS sources and dependencies are inventoried.
+    cross_mappings: [nist-govern-04]
+  - id: hipaa-164-310-a1
+    title: Facility access controls
+    description: Protect runtime environments that host AI agent security logs.
+    evidence_types: [policy, audit_log]
+    audit_perspective: Confirm logs are emitted for customer-managed retention.
+    cross_mappings: [soc2-cc6-08]
+  - id: hipaa-164-310-b1
+    title: Workstation use
+    description: Define appropriate use for developer and operator workstations interacting with agents.
+    evidence_types: [policy, documentation]
+    audit_perspective: Confirm local examples do not require committed secrets.
+    cross_mappings: [soc2-cc6-01]
+  - id: hipaa-164-310-c1
+    title: Workstation security
+    description: Protect workstations that can access agent logs or configuration.
+    evidence_types: [policy, configuration]
+    audit_perspective: Verify generated reports are not committed by default.
+    cross_mappings: [soc2-cc6-09]
+  - id: hipaa-164-310-d1
+    title: Device and media controls
+    description: Control storage media containing exported evidence logs.
+    evidence_types: [policy, audit_log]
+    audit_perspective: Confirm evidence output paths are documented.
+    cross_mappings: [nist-manage-05]
+  - id: hipaa-164-310-d2
+    title: Media disposal and reuse
+    description: Define retention and disposal for evidence containing protected data.
+    evidence_types: [policy, audit_log]
+    audit_perspective: Confirm library writes evidence while customer handles retention.
+    cross_mappings: [nist-manage-05, soc2-cc6-08]
+  - id: hipaa-164-312-a1
+    title: Technical access control
+    description: Enforce technical controls around agent tool access and data access.
+    evidence_types: [configuration, tool_call_event]
+    audit_perspective: Verify allowlists and blocked tool decisions are recorded.
+    cross_mappings: [soc2-cc6-06]
+  - id: hipaa-164-312-a2
+    title: Unique user identification context
+    description: Preserve session context needed to link events to agent sessions.
+    evidence_types: [audit_log, detection_event]
+    audit_perspective: Confirm session identifiers appear in evidence where configured.
+    cross_mappings: [eu-ai-act-14-03]
+  - id: hipaa-164-312-b
+    title: Audit controls
+    description: Record activity involving systems that create or process protected data.
+    evidence_types: [audit_log, siem_event]
+    audit_perspective: Confirm prompt, tool, state, and output events are auditable.
+    cross_mappings: [nist-map-03, soc2-cc7-09]
+  - id: hipaa-164-312-c1
+    title: Integrity controls
+    description: Protect evidence from improper alteration or destruction.
+    evidence_types: [hash_chain, audit_log]
+    audit_perspective: Verify sha256 chain-of-custody fields are present.
+    cross_mappings: [nist-measure-05, soc2-cc7-08]
+  - id: hipaa-164-312-d
+    title: Authentication context
+    description: Preserve context about authenticated workflow sessions when supplied.
+    evidence_types: [audit_log, configuration]
+    audit_perspective: Verify configurable session identifiers are propagated.
+    cross_mappings: [eu-ai-act-14-03]
+  - id: hipaa-164-312-e1
+    title: Transmission security
+    description: Detect attempted transmission of protected data to unsafe destinations.
+    evidence_types: [detection_event, tool_call_event]
+    audit_perspective: Confirm exfil and suspicious URL detections are retained.
+    cross_mappings: [nist-measure-01, eu-ai-act-15-04]

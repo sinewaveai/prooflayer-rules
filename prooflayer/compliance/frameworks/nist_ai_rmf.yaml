@@ -1,0 +1,124 @@
+framework: nist_ai_rmf
+name: NIST AI Risk Management Framework
+version: "1.0"
+controls:
+  - id: nist-govern-01
+    title: AI governance policy
+    description: Document ownership, acceptable use, and review duties for AI agent deployments.
+    evidence_types: [policy, configuration, audit_log]
+    audit_perspective: Verify that runtime security policies are approved and linked to agent owners.
+    cross_mappings: [soc2-cc6-01, eu-ai-act-13-01]
+  - id: nist-govern-02
+    title: Role accountability
+    description: Assign accountable owners for model, tool, data, and security decisions.
+    evidence_types: [policy, configuration]
+    audit_perspective: Confirm named owners exist for security configuration and incident triage.
+    cross_mappings: [soc2-cc6-02, hipaa-164-308-a1]
+  - id: nist-govern-03
+    title: Risk tolerance
+    description: Define thresholds for allow, warn, block, and incident escalation.
+    evidence_types: [configuration, detection_event]
+    audit_perspective: Compare configured detection actions with approved risk tolerance.
+    cross_mappings: [soc2-cc7-01, eu-ai-act-15-01]
+  - id: nist-govern-04
+    title: Third-party component inventory
+    description: Maintain inventory of agent frameworks, models, tools, and security rules.
+    evidence_types: [software_inventory, rule_metadata]
+    audit_perspective: Verify OSS rule sources and integration dependencies are traceable.
+    cross_mappings: [soc2-cc6-03, eu-ai-act-13-02]
+  - id: nist-govern-05
+    title: Incident response planning
+    description: Define response processes for prompt injection, exfiltration, and tool abuse.
+    evidence_types: [policy, incident_record, detection_event]
+    audit_perspective: Check that high-severity detections route into incident response.
+    cross_mappings: [soc2-cc7-04, hipaa-164-308-a6]
+  - id: nist-map-01
+    title: Context of use
+    description: Record the intended business context and boundaries for each agent.
+    evidence_types: [configuration, system_card]
+    audit_perspective: Verify scope drift detection references the agent operating context.
+    cross_mappings: [eu-ai-act-13-03, soc2-cc6-04]
+  - id: nist-map-02
+    title: User and stakeholder impact
+    description: Identify affected users, data subjects, and operators for the AI workflow.
+    evidence_types: [risk_assessment, system_card]
+    audit_perspective: Confirm evidence reports identify impacted workflow owners.
+    cross_mappings: [eu-ai-act-13-04, hipaa-164-308-a1]
+  - id: nist-map-03
+    title: Data flow mapping
+    description: Document input, memory, tool, retrieval, and output data flows.
+    evidence_types: [architecture, audit_log]
+    audit_perspective: Trace detection events to the data flow stage where they occurred.
+    cross_mappings: [soc2-cc6-05, hipaa-164-312-b]
+  - id: nist-map-04
+    title: Tool access mapping
+    description: Document external tools, allowed operations, and enforcement points.
+    evidence_types: [configuration, tool_call_event]
+    audit_perspective: Verify tool abuse findings include tool name and allowlist decision.
+    cross_mappings: [soc2-cc6-06, eu-ai-act-15-02]
+  - id: nist-map-05
+    title: Threat model mapping
+    description: Map agent threats to OWASP LLM Top 10, MITRE ATLAS, or internal taxonomy.
+    evidence_types: [rule_metadata, detection_event]
+    audit_perspective: Confirm each detection event includes source rule identifiers.
+    cross_mappings: [soc2-cc7-02, eu-ai-act-15-03]
+  - id: nist-measure-01
+    title: Runtime detection measurement
+    description: Measure prompt injection, jailbreak, tool abuse, exfiltration, and state risks.
+    evidence_types: [detection_event, metric]
+    audit_perspective: Verify events include category, severity, timestamp, and decision.
+    cross_mappings: [soc2-cc7-03, eu-ai-act-15-04]
+  - id: nist-measure-02
+    title: Adversarial evaluation
+    description: Run red-team probes against the agent before release and after material changes.
+    evidence_types: [eval_report, finding]
+    audit_perspective: Confirm eval reports include passed and failed adversarial probes.
+    cross_mappings: [eu-ai-act-15-05, soc2-cc7-05]
+  - id: nist-measure-03
+    title: Latency and performance measurement
+    description: Measure runtime security overhead on the agent hot path.
+    evidence_types: [benchmark, metric]
+    audit_perspective: Confirm p99 latency remains inside the approved control budget.
+    cross_mappings: [eu-ai-act-15-06, soc2-cc7-06]
+  - id: nist-measure-04
+    title: False positive review
+    description: Review warn and block events for quality and operational impact.
+    evidence_types: [detection_event, review_record]
+    audit_perspective: Verify review records reference event hashes and rule identifiers.
+    cross_mappings: [soc2-cc7-07]
+  - id: nist-measure-05
+    title: Chain-of-custody integrity
+    description: Protect evidence records with deterministic hashes and ordering.
+    evidence_types: [audit_log, hash_chain]
+    audit_perspective: Recompute event hashes and verify predecessor linkage.
+    cross_mappings: [soc2-cc7-08, hipaa-164-312-c1]
+  - id: nist-manage-01
+    title: Risk treatment decisions
+    description: Record whether detections are allowed, warned, blocked, or escalated.
+    evidence_types: [configuration, detection_event]
+    audit_perspective: Confirm runtime decisions match approved treatment settings.
+    cross_mappings: [soc2-cc6-07, eu-ai-act-15-07]
+  - id: nist-manage-02
+    title: Change management
+    description: Review security configuration and rule changes before deployment.
+    evidence_types: [change_record, rule_metadata]
+    audit_perspective: Verify rule version changes are reflected in evidence records.
+    cross_mappings: [soc2-cc8-01]
+  - id: nist-manage-03
+    title: Monitoring and escalation
+    description: Monitor security events and escalate high-severity agent threats.
+    evidence_types: [siem_event, detection_event]
+    audit_perspective: Confirm SIEM payloads preserve event category and rule IDs.
+    cross_mappings: [soc2-cc7-09, hipaa-164-312-b]
+  - id: nist-manage-04
+    title: Residual risk acceptance
+    description: Document known failed probes and compensating controls.
+    evidence_types: [eval_report, risk_acceptance]
+    audit_perspective: Confirm failed eval findings have owner-approved disposition.
+    cross_mappings: [soc2-cc3-01, eu-ai-act-15-08]
+  - id: nist-manage-05
+    title: Decommissioning and retention
+    description: Define evidence retention and disposal for retired agents.
+    evidence_types: [policy, audit_log]
+    audit_perspective: Verify the library writes evidence and customers manage retention.
+    cross_mappings: [hipaa-164-310-d2, soc2-cc6-08]

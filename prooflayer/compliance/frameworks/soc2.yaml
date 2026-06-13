@@ -1,0 +1,124 @@
+framework: soc2
+name: SOC 2 CC6 and CC7 AI Agent Evidence Map
+version: "2026-ai-applicable-subset"
+controls:
+  - id: soc2-cc6-01
+    title: Logical access security policy
+    description: Define security expectations for agent access and runtime controls.
+    evidence_types: [policy, configuration]
+    audit_perspective: Verify agent controls are documented and approved.
+    cross_mappings: [nist-govern-01, eu-ai-act-13-01]
+  - id: soc2-cc6-02
+    title: Control ownership
+    description: Assign responsibility for runtime security settings and reviews.
+    evidence_types: [policy, configuration]
+    audit_perspective: Confirm named owners exist for ProofLayer configuration.
+    cross_mappings: [nist-govern-02]
+  - id: soc2-cc6-03
+    title: Component inventory
+    description: Maintain inventory of frameworks, tools, and runtime security components.
+    evidence_types: [software_inventory, rule_metadata]
+    audit_perspective: Verify rule source and framework dependency traceability.
+    cross_mappings: [nist-govern-04]
+  - id: soc2-cc6-04
+    title: Authorized use boundaries
+    description: Define authorized purposes for AI agents and workflow boundaries.
+    evidence_types: [configuration, system_card]
+    audit_perspective: Confirm scope drift checks align to documented boundaries.
+    cross_mappings: [nist-map-01]
+  - id: soc2-cc6-05
+    title: Data access flow control
+    description: Document where sensitive data may enter, move, and leave the agent.
+    evidence_types: [architecture, audit_log]
+    audit_perspective: Confirm exfil detections identify input or output stage.
+    cross_mappings: [nist-map-03, hipaa-164-312-b]
+  - id: soc2-cc6-06
+    title: Tool access restrictions
+    description: Restrict agent tool calls through allowlists and argument inspection.
+    evidence_types: [configuration, tool_call_event]
+    audit_perspective: Verify blocked tool calls include the tool and decision.
+    cross_mappings: [nist-map-04, eu-ai-act-14-04]
+  - id: soc2-cc6-07
+    title: Prevent unauthorized actions
+    description: Block high-risk prompts, tools, outputs, or state updates.
+    evidence_types: [detection_event, configuration]
+    audit_perspective: Confirm block decisions interrupt unsafe execution.
+    cross_mappings: [nist-manage-01, eu-ai-act-14-02]
+  - id: soc2-cc6-08
+    title: Evidence retention responsibility
+    description: Define customer responsibility for log rotation and retention.
+    evidence_types: [policy, audit_log]
+    audit_perspective: Verify emitted logs are suitable for retention controls.
+    cross_mappings: [nist-manage-05, hipaa-164-310-d2]
+  - id: soc2-cc6-09
+    title: Configuration protection
+    description: Protect runtime security configuration from unauthorized change.
+    evidence_types: [configuration, change_record]
+    audit_perspective: Verify configuration changes are reviewed.
+    cross_mappings: [nist-manage-02]
+  - id: soc2-cc6-10
+    title: Least functionality
+    description: Enable only the integrations and tool surfaces required for the workflow.
+    evidence_types: [configuration, software_inventory]
+    audit_perspective: Confirm optional extras are installed only when needed.
+    cross_mappings: [nist-govern-04]
+  - id: soc2-cc7-01
+    title: Detection threshold monitoring
+    description: Monitor warning and blocking thresholds for operational suitability.
+    evidence_types: [metric, detection_event]
+    audit_perspective: Confirm configured decisions match observed event behavior.
+    cross_mappings: [nist-govern-03]
+  - id: soc2-cc7-02
+    title: Threat intelligence mapping
+    description: Map security detections to known AI threat categories.
+    evidence_types: [rule_metadata, detection_event]
+    audit_perspective: Verify events include rule IDs and categories.
+    cross_mappings: [nist-map-05]
+  - id: soc2-cc7-03
+    title: Security event detection
+    description: Detect runtime prompt injection, tool abuse, exfiltration, and drift.
+    evidence_types: [detection_event]
+    audit_perspective: Confirm each event includes category, decision, timestamp, and session.
+    cross_mappings: [nist-measure-01, eu-ai-act-15-04]
+  - id: soc2-cc7-04
+    title: Incident escalation
+    description: Escalate high-risk detections to incident response.
+    evidence_types: [incident_record, detection_event]
+    audit_perspective: Verify critical detections can be routed to response workflows.
+    cross_mappings: [nist-govern-05, hipaa-164-308-a6]
+  - id: soc2-cc7-05
+    title: Adversarial test monitoring
+    description: Review adversarial eval results before release.
+    evidence_types: [eval_report, finding]
+    audit_perspective: Confirm failed evals are visible and reviewed.
+    cross_mappings: [nist-measure-02, eu-ai-act-15-05]
+  - id: soc2-cc7-06
+    title: Performance monitoring
+    description: Monitor security control latency and operational overhead.
+    evidence_types: [benchmark, metric]
+    audit_perspective: Verify p99 latency remains under the approved target.
+    cross_mappings: [nist-measure-03]
+  - id: soc2-cc7-07
+    title: Detection quality review
+    description: Review false positives and false negatives from runtime detections.
+    evidence_types: [review_record, detection_event]
+    audit_perspective: Confirm reviews reference event hashes and rule IDs.
+    cross_mappings: [nist-measure-04]
+  - id: soc2-cc7-08
+    title: Log integrity
+    description: Preserve integrity of event evidence with hash chaining.
+    evidence_types: [audit_log, hash_chain]
+    audit_perspective: Verify chain hashes link consecutive events.
+    cross_mappings: [nist-measure-05, hipaa-164-312-c1]
+  - id: soc2-cc7-09
+    title: SIEM integration
+    description: Emit event records in SIEM-compatible format.
+    evidence_types: [siem_event]
+    audit_perspective: Confirm Splunk-compatible JSON preserves security fields.
+    cross_mappings: [nist-manage-03]
+  - id: soc2-cc7-10
+    title: Control improvement
+    description: Feed detection and eval results into control updates.
+    evidence_types: [change_record, eval_report]
+    audit_perspective: Confirm repeated findings trigger rule or configuration review.
+    cross_mappings: [nist-manage-02, eu-ai-act-15-10]

@@ -1,0 +1,124 @@
+framework: eu_ai_act
+name: EU AI Act Articles 13-15 Evidence Map
+version: "2026-ai-applicable-subset"
+controls:
+  - id: eu-ai-act-13-01
+    title: Transparency instructions
+    description: Provide clear operating instructions for deployers of the AI agent.
+    evidence_types: [documentation, configuration]
+    audit_perspective: Verify integration docs explain runtime security behavior and limits.
+    cross_mappings: [nist-govern-01, soc2-cc6-01]
+  - id: eu-ai-act-13-02
+    title: System capabilities
+    description: Describe agent capabilities, limitations, and expected security controls.
+    evidence_types: [system_card, documentation]
+    audit_perspective: Confirm documentation identifies ProofLayer as runtime security, not tracing.
+    cross_mappings: [nist-govern-04]
+  - id: eu-ai-act-13-03
+    title: Intended purpose
+    description: Define the intended purpose and boundaries for agent behavior.
+    evidence_types: [configuration, system_card]
+    audit_perspective: Verify scope drift detections map back to the stated purpose.
+    cross_mappings: [nist-map-01]
+  - id: eu-ai-act-13-04
+    title: Human oversight information
+    description: Provide information needed for operators to interpret warnings and blocks.
+    evidence_types: [audit_log, documentation]
+    audit_perspective: Check that event decisions are understandable and timestamped.
+    cross_mappings: [nist-map-02, soc2-cc7-01]
+  - id: eu-ai-act-13-05
+    title: Input data expectations
+    description: Describe expected input types, unsafe inputs, and protected data boundaries.
+    evidence_types: [documentation, detection_event]
+    audit_perspective: Confirm prompt injection and exfil events include evidence snippets.
+    cross_mappings: [nist-map-03, hipaa-164-312-b]
+  - id: eu-ai-act-14-01
+    title: Human oversight design
+    description: Support human review through warn decisions and structured evidence.
+    evidence_types: [detection_event, review_record]
+    audit_perspective: Verify warn-mode findings are retained for operator review.
+    cross_mappings: [nist-manage-03, soc2-cc7-04]
+  - id: eu-ai-act-14-02
+    title: Interruption capability
+    description: Support blocking unsafe execution before tool or output harm occurs.
+    evidence_types: [detection_event, configuration]
+    audit_perspective: Confirm block-mode categories interrupt graph execution.
+    cross_mappings: [nist-manage-01, soc2-cc6-07]
+  - id: eu-ai-act-14-03
+    title: Oversight event traceability
+    description: Preserve event trails for operator and auditor review.
+    evidence_types: [audit_log, hash_chain]
+    audit_perspective: Verify events include session, rule, timestamp, and hash linkage.
+    cross_mappings: [nist-measure-05, soc2-cc7-08]
+  - id: eu-ai-act-14-04
+    title: Tool oversight
+    description: Enforce oversight of agent tool calls and tool arguments.
+    evidence_types: [tool_call_event, detection_event]
+    audit_perspective: Confirm blocked tool calls preserve requested tool and reason.
+    cross_mappings: [nist-map-04, soc2-cc6-06]
+  - id: eu-ai-act-14-05
+    title: Memory oversight
+    description: Detect attempts to manipulate memory, prompts, or security policy.
+    evidence_types: [state_update_event, detection_event]
+    audit_perspective: Confirm state manipulation findings identify sensitive keys or text.
+    cross_mappings: [nist-measure-01]
+  - id: eu-ai-act-15-01
+    title: Accuracy and robustness thresholds
+    description: Define security thresholds for blocking and warning on unsafe behavior.
+    evidence_types: [configuration, metric]
+    audit_perspective: Verify configured actions match approved robustness targets.
+    cross_mappings: [nist-govern-03]
+  - id: eu-ai-act-15-02
+    title: Tool robustness
+    description: Prevent unauthorized or unsafe tool use through validation controls.
+    evidence_types: [tool_call_event, configuration]
+    audit_perspective: Confirm allowlists and argument inspection are active when configured.
+    cross_mappings: [nist-map-04]
+  - id: eu-ai-act-15-03
+    title: Threat taxonomy coverage
+    description: Map detections to recognized AI threat categories.
+    evidence_types: [rule_metadata, detection_event]
+    audit_perspective: Verify findings include rule category and source metadata.
+    cross_mappings: [nist-map-05]
+  - id: eu-ai-act-15-04
+    title: Runtime monitoring
+    description: Monitor AI agent operations for prompt, output, tool, and state threats.
+    evidence_types: [detection_event, siem_event]
+    audit_perspective: Confirm monitored events can be exported to SIEM-compatible JSON.
+    cross_mappings: [nist-measure-01, soc2-cc7-03]
+  - id: eu-ai-act-15-05
+    title: Adversarial robustness testing
+    description: Run adversarial probes against the agent integration.
+    evidence_types: [eval_report, finding]
+    audit_perspective: Confirm GARAK, PromptFoo, or built-in suite findings are retained.
+    cross_mappings: [nist-measure-02]
+  - id: eu-ai-act-15-06
+    title: Performance under control
+    description: Measure security middleware performance under representative load.
+    evidence_types: [benchmark, metric]
+    audit_perspective: Confirm p99 latency remains within documented budget.
+    cross_mappings: [nist-measure-03]
+  - id: eu-ai-act-15-07
+    title: Fail-safe response
+    description: Configure safe behavior for critical detections.
+    evidence_types: [configuration, detection_event]
+    audit_perspective: Verify high-risk categories can be configured to block.
+    cross_mappings: [nist-manage-01, soc2-cc7-04]
+  - id: eu-ai-act-15-08
+    title: Residual robustness risks
+    description: Document unresolved failed probes and mitigation decisions.
+    evidence_types: [eval_report, risk_acceptance]
+    audit_perspective: Confirm failed findings are explicitly tracked.
+    cross_mappings: [nist-manage-04]
+  - id: eu-ai-act-15-09
+    title: Logging reliability
+    description: Emit reliable event records suitable for audit reconstruction.
+    evidence_types: [audit_log, hash_chain]
+    audit_perspective: Verify event timestamps and hashes are present.
+    cross_mappings: [soc2-cc7-08, hipaa-164-312-c1]
+  - id: eu-ai-act-15-10
+    title: Security update readiness
+    description: Support updates to rules, dependencies, and agent controls.
+    evidence_types: [change_record, rule_metadata]
+    audit_perspective: Confirm rule IDs and versions make security updates traceable.
+    cross_mappings: [nist-manage-02, soc2-cc8-01]

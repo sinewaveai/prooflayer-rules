@@ -29,6 +29,7 @@ setup(
     package_data={
         "prooflayer": [
             "rules/*.yaml",
+            "compliance/frameworks/*.yaml",
         ]
     },
     include_package_data=True,
@@ -53,11 +54,17 @@ setup(
             "docker>=7.0.0",
             "pyyaml>=6.0.0",
         ],
+        "compliance": [
+            "jinja2>=3.1.0",
+            "weasyprint>=60.0",
+        ],
         "all": [
             "langgraph>=0.2.0,<1.0.0",
             "langchain-core>=0.3.0",
             "docker>=7.0.0",
             "pyyaml>=6.0.0",
+            "jinja2>=3.1.0",
+            "weasyprint>=60.0",
         ],
         "dev": [
             "pytest>=7.0.0",
