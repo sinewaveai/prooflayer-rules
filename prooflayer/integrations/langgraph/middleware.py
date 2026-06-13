@@ -10,6 +10,7 @@ from ...response.actions import ThreatAction
 from .config import SecurityConfig
 from .exceptions import BlockedError
 from .hooks import HookAdapter
+from .tool_validator import ToolValidator
 
 
 _PROMPT_INJECTION_RULE_CATEGORIES = {"direct_injection"}
@@ -28,6 +29,7 @@ class SecurityMiddleware:
         self.detection_engine = detection_engine or DetectionEngine()
         self._audit_log: List[Dict[str, Any]] = []
         self.hooks = HookAdapter(self)
+        self.tool_validator = ToolValidator(self)
 
     def wrap(self, compiled_graph: Any) -> "_SecuredLangGraph":
         """Return a secured proxy around a compiled LangGraph object."""

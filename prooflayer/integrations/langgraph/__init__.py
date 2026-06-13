@@ -5,6 +5,7 @@ from .config import SecurityConfig
 from .exceptions import BlockedError, SecurityException
 from .hooks import HookAdapter, HookEvent
 from .middleware import SecurityMiddleware
+from .tool_validator import ToolValidator
 
 __all__ = [
     "AuditCheckpointer",
@@ -14,4 +15,5 @@ __all__ = [
     "SecurityConfig",
     "SecurityException",
     "SecurityMiddleware",
+    "ToolValidator",
 ]

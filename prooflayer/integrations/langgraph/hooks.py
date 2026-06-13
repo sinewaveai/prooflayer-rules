@@ -65,8 +65,12 @@ class HookAdapter:
         config: Optional[Dict[str, Any]] = None,
     ) -> ThreatAction:
         """Run before a LangGraph-managed tool call executes."""
+        decision = self.middleware.tool_validator.validate_tool_call(
+            tool_name,
+            arguments,
+            config,
+        )
         payload = {"tool_name": tool_name, "arguments": arguments}
-        decision = self.middleware.scan_input(payload, config)
         self._record("tool_call", tool_name, payload, decision, config)
         return decision
 
