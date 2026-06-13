@@ -45,6 +45,10 @@ setup(
         "mcp": [
             "mcp>=1.0.0",
         ],
+        "langgraph": [
+            "langgraph>=0.2.0,<1.0.0",
+            "langchain-core>=0.3.0",
+        ],
         "dev": [
             "pytest>=7.0.0",
             "pytest-cov>=4.0.0",
