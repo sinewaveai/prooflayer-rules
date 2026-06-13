@@ -1,19 +1,31 @@
 """Security middleware for LangGraph compiled graphs."""
 
 from collections.abc import AsyncIterator, Iterator
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from ...detection.engine import DetectionEngine
+from ...detection.models import DetectionRule, ScanResult
 from ...response.actions import ThreatAction
 from .config import SecurityConfig
+from .exceptions import BlockedError
 from .hooks import HookAdapter
+
+
+_PROMPT_INJECTION_RULE_CATEGORIES = {"direct_injection"}
 
 
 class SecurityMiddleware:
     """Wrap a compiled LangGraph with ProofLayer runtime security checks."""
 
-    def __init__(self, config: Optional[SecurityConfig] = None) -> None:
+    def __init__(
+        self,
+        config: Optional[SecurityConfig] = None,
+        detection_engine: Optional[DetectionEngine] = None,
+    ) -> None:
         """Initialize middleware with a validated security configuration."""
         self.config = config or SecurityConfig()
+        self.detection_engine = detection_engine or DetectionEngine()
         self._audit_log: List[Dict[str, Any]] = []
         self.hooks = HookAdapter(self)
 
@@ -53,21 +65,97 @@ class SecurityMiddleware:
 
         return None
 
-    def scan_input(self, payload: Any) -> ThreatAction:
+    def scan_input(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> ThreatAction:
         """Scan graph input before execution.
 
-        Day 2 provides the public extension point and defaults to ALLOW.
-        Concrete detection hooks are wired during Days 3 and 4.
+        Prompt injection detection is active on the node-entry hot path.
         """
-        return ThreatAction.ALLOW
+        return self._scan_prompt_injection(payload, config)
 
-    def scan_output(self, payload: Any) -> ThreatAction:
+    def scan_output(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> ThreatAction:
         """Scan graph output after execution.
 
-        Day 2 provides the public extension point and defaults to ALLOW.
-        Concrete detection hooks are wired during Days 3 and 4.
+        Day 4 keeps output inspection as ALLOW. Exfiltration and scope drift
+        are wired in during Week 2.
         """
         return ThreatAction.ALLOW
+
+    def _scan_prompt_injection(
+        self,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+    ) -> ThreatAction:
+        scan_result = self.detection_engine.scan(
+            tool_name="langgraph_input",
+            arguments={"payload": payload},
+        )
+        matched_rules = [
+            rule
+            for rule in scan_result.matched_rules
+            if rule.category in _PROMPT_INJECTION_RULE_CATEGORIES
+        ]
+        if not matched_rules:
+            return ThreatAction.ALLOW
+
+        configured_action = self.config.prompt_injection
+        action = ThreatAction(configured_action.upper())
+        self._record_detection_event(
+            category="prompt_injection",
+            payload=payload,
+            config=config,
+            action=action,
+            scan_result=scan_result,
+            matched_rules=matched_rules,
+        )
+
+        if action == ThreatAction.BLOCK:
+            rule_ids = ", ".join(rule.id for rule in matched_rules)
+            raise BlockedError(
+                "LangGraph execution blocked: prompt injection detected "
+                f"(rules: {rule_ids})"
+            )
+
+        return action
+
+    def _record_detection_event(
+        self,
+        category: str,
+        payload: Any,
+        config: Optional[Dict[str, Any]],
+        action: ThreatAction,
+        scan_result: ScanResult,
+        matched_rules: List[DetectionRule],
+    ) -> None:
+        self.record_event(
+            {
+                "event_type": "detection",
+                "category": category,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "session_id": self.extract_session_id(config, payload),
+                "decision": action.value,
+                "risk_score": scan_result.score,
+                "latency_ms": scan_result.latency_ms,
+                "rule_ids": [rule.id for rule in matched_rules],
+                "rule_sources": [
+                    {
+                        "id": rule.id,
+                        "category": rule.category,
+                        "severity": rule.severity,
+                        "message": rule.message,
+                    }
+                    for rule in matched_rules
+                ],
+                "payload": payload,
+            }
+        )
 
 
 class _SecuredLangGraph:

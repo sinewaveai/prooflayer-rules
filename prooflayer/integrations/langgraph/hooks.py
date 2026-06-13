@@ -43,7 +43,7 @@ class HookAdapter:
         config: Optional[Dict[str, Any]] = None,
     ) -> ThreatAction:
         """Run before a node or graph invocation executes."""
-        decision = self.middleware.scan_input(state)
+        decision = self.middleware.scan_input(state, config)
         self._record("before_node", node_name, state, decision, config)
         return decision
 
@@ -54,7 +54,7 @@ class HookAdapter:
         config: Optional[Dict[str, Any]] = None,
     ) -> ThreatAction:
         """Run after a node or graph invocation produces output."""
-        decision = self.middleware.scan_output(output)
+        decision = self.middleware.scan_output(output, config)
         self._record("after_node", node_name, output, decision, config)
         return decision
 
@@ -66,7 +66,7 @@ class HookAdapter:
     ) -> ThreatAction:
         """Run before a LangGraph-managed tool call executes."""
         payload = {"tool_name": tool_name, "arguments": arguments}
-        decision = self.middleware.scan_input(payload)
+        decision = self.middleware.scan_input(payload, config)
         self._record("tool_call", tool_name, payload, decision, config)
         return decision
 
@@ -77,7 +77,7 @@ class HookAdapter:
         config: Optional[Dict[str, Any]] = None,
     ) -> ThreatAction:
         """Run when LangGraph state is updated."""
-        decision = self.middleware.scan_input(state_update)
+        decision = self.middleware.scan_input(state_update, config)
         self._record("state_update", node_name, state_update, decision, config)
         return decision
 
