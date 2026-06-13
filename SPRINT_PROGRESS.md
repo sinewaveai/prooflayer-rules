@@ -10,3 +10,4 @@
 - Day 8: Added LangGraph tool validation with allowlists, suspicious argument scanning, output capture, and hook wiring.
 - Day 9: Added output exfiltration scanning and deterministic scope drift detection on LangGraph after-node hooks.
 - Day 10: Added state manipulation and multi-turn slow-burn attack detection for LangGraph state and input hooks.
+- Day 11: Added streaming output filtering for stream, astream, stream_events, and astream_events with configurable block handling.

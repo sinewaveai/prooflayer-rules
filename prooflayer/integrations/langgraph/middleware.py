@@ -13,6 +13,7 @@ from ...response.actions import ThreatAction
 from .config import SecurityConfig
 from .exceptions import BlockedError
 from .hooks import HookAdapter
+from .streaming import StreamingFilter
 from .tool_validator import ToolValidator
 
 
@@ -36,6 +37,7 @@ class SecurityMiddleware:
         self.multi_turn_detector = MultiTurnDetector()
         self._audit_log: List[Dict[str, Any]] = []
         self.hooks = HookAdapter(self)
+        self.streaming_filter = StreamingFilter(self)
         self.tool_validator = ToolValidator(self)
 
     def wrap(self, compiled_graph: Any) -> "_SecuredLangGraph":
@@ -351,13 +353,50 @@ class _SecuredLangGraph:
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
         for chunk in self._compiled_graph.stream(input, *args, **kwargs):
-            self._middleware.hooks.after_node("__graph__", chunk, config)
-            yield chunk
+            filtered_chunk = self._middleware.streaming_filter.filter_chunk(
+                chunk,
+                config,
+                "stream",
+            )
+            self._middleware.hooks.after_node("__graph__", filtered_chunk, config)
+            yield filtered_chunk
 
     async def astream(self, input: Any, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
         """Stream graph output asynchronously with security checks around each chunk."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
         async for chunk in self._compiled_graph.astream(input, *args, **kwargs):
-            self._middleware.hooks.after_node("__graph__", chunk, config)
-            yield chunk
+            filtered_chunk = self._middleware.streaming_filter.filter_chunk(
+                chunk,
+                config,
+                "astream",
+            )
+            self._middleware.hooks.after_node("__graph__", filtered_chunk, config)
+            yield filtered_chunk
+
+    def stream_events(self, input: Any, *args: Any, **kwargs: Any) -> Iterator[Any]:
+        """Stream graph events with output filtering for event payloads."""
+        config = kwargs.get("config")
+        self._middleware.hooks.before_node("__graph__", input, config)
+        for event in self._compiled_graph.stream_events(input, *args, **kwargs):
+            yield self._middleware.streaming_filter.filter_chunk(
+                event,
+                config,
+                "stream_events",
+            )
+
+    async def astream_events(
+        self,
+        input: Any,
+        *args: Any,
+        **kwargs: Any,
+    ) -> AsyncIterator[Any]:
+        """Stream graph events asynchronously with output filtering."""
+        config = kwargs.get("config")
+        self._middleware.hooks.before_node("__graph__", input, config)
+        async for event in self._compiled_graph.astream_events(input, *args, **kwargs):
+            yield self._middleware.streaming_filter.filter_chunk(
+                event,
+                config,
+                "astream_events",
+            )

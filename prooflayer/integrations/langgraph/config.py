@@ -5,10 +5,12 @@ from typing import Dict, List, Literal, Optional
 
 
 DetectionAction = Literal["allow", "warn", "block"]
+StreamingBlockMode = Literal["raise", "replace"]
 
 
 _VALID_ACTIONS = {"allow", "warn", "block"}
 _VALID_FRAMEWORKS = {"nist_ai_rmf", "eu_ai_act", "soc2", "hipaa"}
+_VALID_STREAMING_BLOCK_MODES = {"raise", "replace"}
 
 
 @dataclass
@@ -26,6 +28,8 @@ class SecurityConfig:
     emit_to: List[str] = field(default_factory=lambda: ["stdout"])
     allowed_tools: Optional[List[str]] = None
     session_id_key: str = "session_id"
+    streaming_block_mode: StreamingBlockMode = "raise"
+    blocked_token: str = "[BLOCKED]"
 
     def __post_init__(self) -> None:
         """Validate category actions, evidence frameworks, and emit targets."""
@@ -64,6 +68,14 @@ class SecurityConfig:
 
         if not self.session_id_key:
             raise ValueError("session_id_key must not be empty")
+
+        if self.streaming_block_mode not in _VALID_STREAMING_BLOCK_MODES:
+            raise ValueError(
+                f"Unsupported streaming_block_mode: {self.streaming_block_mode!r}"
+            )
+
+        if not self.blocked_token:
+            raise ValueError("blocked_token must not be empty")
 
     def category_actions(self) -> Dict[str, DetectionAction]:
         """Return detection categories mapped to configured actions."""

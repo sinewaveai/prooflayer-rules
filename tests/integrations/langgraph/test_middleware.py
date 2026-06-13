@@ -73,6 +73,13 @@ def test_security_config_rejects_invalid_audit_sink():
         SecurityConfig(emit_to=["file"])
 
 
+def test_security_config_accepts_streaming_options():
+    config = SecurityConfig(streaming_block_mode="replace", blocked_token="[REDACTED]")
+
+    assert config.streaming_block_mode == "replace"
+    assert config.blocked_token == "[REDACTED]"
+
+
 def test_security_middleware_wrap_invokes_underlying_graph():
     graph = FakeCompiledGraph()
     middleware = SecurityMiddleware()
