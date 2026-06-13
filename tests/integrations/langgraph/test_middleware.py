@@ -111,3 +111,29 @@ def test_get_audit_log_returns_copy_and_filters_by_session():
 
     assert middleware.get_audit_log("one") == [{"session_id": "one", "event": "a"}]
     assert len(middleware.get_audit_log()) == 2
+
+
+def test_hook_adapter_records_tool_call_events():
+    middleware = SecurityMiddleware()
+
+    decision = middleware.hooks.on_tool_call(
+        "search_docs",
+        {"query": "hello"},
+        {"configurable": {"thread_id": "thread-1"}},
+    )
+
+    assert decision == ThreatAction.ALLOW
+    assert middleware.get_audit_log("thread-1")[0]["event_type"] == "tool_call"
+
+
+def test_hook_adapter_records_state_update_events():
+    middleware = SecurityMiddleware()
+
+    decision = middleware.hooks.on_state_update(
+        "echo",
+        {"text": "hello"},
+        {"configurable": {"thread_id": "thread-1"}},
+    )
+
+    assert decision == ThreatAction.ALLOW
+    assert middleware.get_audit_log("thread-1")[0]["event_type"] == "state_update"

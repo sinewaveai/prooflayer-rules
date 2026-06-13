@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from ...response.actions import ThreatAction
 from .config import SecurityConfig
+from .hooks import HookAdapter
 
 
 class SecurityMiddleware:
@@ -14,6 +15,7 @@ class SecurityMiddleware:
         """Initialize middleware with a validated security configuration."""
         self.config = config or SecurityConfig()
         self._audit_log: List[Dict[str, Any]] = []
+        self.hooks = HookAdapter(self)
 
     def wrap(self, compiled_graph: Any) -> "_SecuredLangGraph":
         """Return a secured proxy around a compiled LangGraph object."""
@@ -28,6 +30,28 @@ class SecurityMiddleware:
             for event in self._audit_log
             if event.get("session_id") == session_id
         ]
+
+    def record_event(self, event: Dict[str, Any]) -> None:
+        """Append a structured event to the in-memory audit log."""
+        self._audit_log.append(dict(event))
+
+    def extract_session_id(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        payload: Any = None,
+    ) -> Optional[str]:
+        """Extract a session ID from LangGraph config or state payload."""
+        if config:
+            configurable = config.get("configurable", {})
+            if self.config.session_id_key in configurable:
+                return str(configurable[self.config.session_id_key])
+            if "thread_id" in configurable:
+                return str(configurable["thread_id"])
+
+        if isinstance(payload, dict) and self.config.session_id_key in payload:
+            return str(payload[self.config.session_id_key])
+
+        return None
 
     def scan_input(self, payload: Any) -> ThreatAction:
         """Scan graph input before execution.
@@ -58,28 +82,32 @@ class _SecuredLangGraph:
 
     def invoke(self, input: Any, *args: Any, **kwargs: Any) -> Any:
         """Run a synchronous graph invocation with security checks."""
-        self._middleware.scan_input(input)
+        config = kwargs.get("config")
+        self._middleware.hooks.before_node("__graph__", input, config)
         result = self._compiled_graph.invoke(input, *args, **kwargs)
-        self._middleware.scan_output(result)
+        self._middleware.hooks.after_node("__graph__", result, config)
         return result
 
     async def ainvoke(self, input: Any, *args: Any, **kwargs: Any) -> Any:
         """Run an asynchronous graph invocation with security checks."""
-        self._middleware.scan_input(input)
+        config = kwargs.get("config")
+        self._middleware.hooks.before_node("__graph__", input, config)
         result = await self._compiled_graph.ainvoke(input, *args, **kwargs)
-        self._middleware.scan_output(result)
+        self._middleware.hooks.after_node("__graph__", result, config)
         return result
 
     def stream(self, input: Any, *args: Any, **kwargs: Any) -> Iterator[Any]:
         """Stream graph output with security checks around each chunk."""
-        self._middleware.scan_input(input)
+        config = kwargs.get("config")
+        self._middleware.hooks.before_node("__graph__", input, config)
         for chunk in self._compiled_graph.stream(input, *args, **kwargs):
-            self._middleware.scan_output(chunk)
+            self._middleware.hooks.after_node("__graph__", chunk, config)
             yield chunk
 
     async def astream(self, input: Any, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
         """Stream graph output asynchronously with security checks around each chunk."""
-        self._middleware.scan_input(input)
+        config = kwargs.get("config")
+        self._middleware.hooks.before_node("__graph__", input, config)
         async for chunk in self._compiled_graph.astream(input, *args, **kwargs):
-            self._middleware.scan_output(chunk)
+            self._middleware.hooks.after_node("__graph__", chunk, config)
             yield chunk
