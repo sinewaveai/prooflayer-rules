@@ -1,7 +1,7 @@
 """Built-in LangGraph-specific adversarial probe suite."""
 
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence
+from typing import Iterable, List, Optional, Sequence
 
 from ..integrations.langgraph.exceptions import BlockedError, SecurityException
 from .langgraph_target import LangGraphEvalTarget
@@ -22,7 +22,7 @@ class AdversarialProbe:
 class AdversarialSuite:
     """Run bundled adversarial probes directly against a LangGraph target."""
 
-    def __init__(self, probes: Sequence[AdversarialProbe] | None = None) -> None:
+    def __init__(self, probes: Optional[Sequence[AdversarialProbe]] = None) -> None:
         """Initialize the suite with default or custom probes."""
         self.probes = list(probes) if probes is not None else default_probes()
 

@@ -10,6 +10,9 @@ from ...detection.multi_turn import MultiTurnDetector
 from ...detection.scope_drift import ScopeDriftDetector, ScopeDriftFinding
 from ...detection.state_manipulation import StateManipulationDetector
 from ...response.actions import ThreatAction
+from ..common.audit import AuditEventRecorder
+from ..common.envelope import extract_config_session_id
+from ..common.runtime_proxy import SecuredRuntimeProxy
 from .config import SecurityConfig
 from .exceptions import BlockedError
 from .hooks import HookAdapter
@@ -42,7 +45,8 @@ class SecurityMiddleware:
         self.scope_drift_detector = ScopeDriftDetector()
         self.state_manipulation_detector = StateManipulationDetector()
         self.multi_turn_detector = MultiTurnDetector()
-        self._audit_log: List[Dict[str, Any]] = []
+        self._audit_recorder = AuditEventRecorder()
+        self._audit_log = self._audit_recorder._events
         self.hooks = HookAdapter(self)
         self.streaming_filter = StreamingFilter(self)
         self.tool_validator = ToolValidator(self)
@@ -53,15 +57,11 @@ class SecurityMiddleware:
 
     def get_audit_log(self, session_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return audit events, optionally filtered by session ID."""
-        if session_id is None:
-            return list(self._audit_log)
-        return [
-            event for event in self._audit_log if event.get("session_id") == session_id
-        ]
+        return self._audit_recorder.list(session_id)
 
     def record_event(self, event: Dict[str, Any]) -> None:
-        """Append a structured event to the in-memory audit log."""
-        self._audit_log.append(dict(event))
+        """Append a structured event to the in-memory audit log with a hash."""
+        self._audit_recorder.append(event)
 
     def extract_session_id(
         self,
@@ -69,17 +69,7 @@ class SecurityMiddleware:
         payload: Any = None,
     ) -> Optional[str]:
         """Extract a session ID from LangGraph config or state payload."""
-        if config:
-            configurable = config.get("configurable", {})
-            if self.config.session_id_key in configurable:
-                return str(configurable[self.config.session_id_key])
-            if "thread_id" in configurable:
-                return str(configurable["thread_id"])
-
-        if isinstance(payload, dict) and self.config.session_id_key in payload:
-            return str(payload[self.config.session_id_key])
-
-        return None
+        return extract_config_session_id(self.config.session_id_key, config, payload)
 
     def scan_input(
         self,
@@ -400,21 +390,21 @@ class SecurityMiddleware:
         )
 
 
-class _SecuredLangGraph:
+class _SecuredLangGraph(SecuredRuntimeProxy):
     """Proxy that preserves the compiled LangGraph invocation interface."""
 
     def __init__(self, compiled_graph: Any, middleware: SecurityMiddleware) -> None:
-        self._compiled_graph = compiled_graph
+        super().__init__(target=compiled_graph, adapter=middleware)
         self._middleware = middleware
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self._compiled_graph, name)
+        return getattr(self.target, name)
 
     def invoke(self, input: Any, *args: Any, **kwargs: Any) -> Any:
         """Run a synchronous graph invocation with security checks."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
-        result = self._compiled_graph.invoke(input, *args, **kwargs)
+        result = self.target.invoke(input, *args, **kwargs)
         self._middleware.hooks.after_node("__graph__", result, config)
         return result
 
@@ -422,7 +412,7 @@ class _SecuredLangGraph:
         """Run an asynchronous graph invocation with security checks."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
-        result = await self._compiled_graph.ainvoke(input, *args, **kwargs)
+        result = await self.target.ainvoke(input, *args, **kwargs)
         self._middleware.hooks.after_node("__graph__", result, config)
         return result
 
@@ -430,7 +420,7 @@ class _SecuredLangGraph:
         """Stream graph output with security checks around each chunk."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
-        for chunk in self._compiled_graph.stream(input, *args, **kwargs):
+        for chunk in self.target.stream(input, *args, **kwargs):
             filtered_chunk = self._middleware.streaming_filter.filter_chunk(
                 chunk,
                 config,
@@ -445,7 +435,7 @@ class _SecuredLangGraph:
         """Stream graph output asynchronously with security checks around each chunk."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
-        async for chunk in self._compiled_graph.astream(input, *args, **kwargs):
+        async for chunk in self.target.astream(input, *args, **kwargs):
             filtered_chunk = self._middleware.streaming_filter.filter_chunk(
                 chunk,
                 config,
@@ -458,7 +448,7 @@ class _SecuredLangGraph:
         """Stream graph events with output filtering for event payloads."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
-        for event in self._compiled_graph.stream_events(input, *args, **kwargs):
+        for event in self.target.stream_events(input, *args, **kwargs):
             yield self._middleware.streaming_filter.filter_chunk(
                 event,
                 config,
@@ -474,7 +464,7 @@ class _SecuredLangGraph:
         """Stream graph events asynchronously with output filtering."""
         config = kwargs.get("config")
         self._middleware.hooks.before_node("__graph__", input, config)
-        async for event in self._compiled_graph.astream_events(input, *args, **kwargs):
+        async for event in self.target.astream_events(input, *args, **kwargs):
             yield self._middleware.streaming_filter.filter_chunk(
                 event,
                 config,

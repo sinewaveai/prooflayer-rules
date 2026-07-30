@@ -122,6 +122,17 @@ def test_get_audit_log_returns_copy_and_filters_by_session():
     assert len(middleware.get_audit_log()) == 2
 
 
+def test_record_event_adds_chain_of_custody_hashes():
+    middleware = SecurityMiddleware()
+
+    middleware.record_event({"event_type": "one", "session_id": "thread-1"})
+    middleware.record_event({"event_type": "two", "session_id": "thread-1"})
+
+    events = middleware.get_audit_log("thread-1")
+    assert events[0]["hash"].startswith("sha256:")
+    assert events[1]["previous_hash"] == events[0]["event_hash"]
+
+
 def test_hook_adapter_records_tool_call_events():
     middleware = SecurityMiddleware()
 
