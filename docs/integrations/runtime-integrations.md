@@ -79,3 +79,21 @@ New integrations must:
 Phase 2 should add `prooflayer.integrations.langchain_mcp` and
 `prooflayer.integrations.llamaindex` using these shared primitives. It should
 not add package extras until exact supported dependency versions are confirmed.
+
+## Phase 2 Status
+
+Phase 2 adds the first two shared-primitive integrations:
+
+| Integration | Public API | Protected surfaces |
+|---|---|---|
+| LangChain MCP | `SecurityMiddleware.wrap_tools(tools)` | tool descriptions, arguments, outputs |
+| LlamaIndex | `ProofLayerToolWrapper.wrap_tools(tools)` | tool descriptions, arguments, outputs, retrieved context |
+
+The optional extras are:
+
+```bash
+pip install "prooflayer-rules[langchain-mcp]"
+pip install "prooflayer-rules[llamaindex]"
+```
+
+Both integrations keep optional framework imports out of the base import path.

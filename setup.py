@@ -50,6 +50,13 @@ setup(
             "langgraph>=0.2.0,<1.0.0",
             "langchain-core>=0.3.0",
         ],
+        "langchain-mcp": [
+            "langchain-mcp-adapters>=0.3.1",
+            "langchain-core>=0.3.0",
+        ],
+        "llamaindex": [
+            "llama-index>=0.14.23",
+        ],
         "evals": [
             "docker>=7.0.0",
             "pyyaml>=6.0.0",
@@ -61,6 +68,8 @@ setup(
         "all": [
             "langgraph>=0.2.0,<1.0.0",
             "langchain-core>=0.3.0",
+            "langchain-mcp-adapters>=0.3.1",
+            "llama-index>=0.14.23",
             "docker>=7.0.0",
             "pyyaml>=6.0.0",
             "jinja2>=3.1.0",
