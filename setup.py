@@ -71,6 +71,8 @@ setup(
             "pytest-cov>=4.0.0",
             "pytest-timeout>=2.0.0",
             "pytest-asyncio>=0.21.0",
+            "langgraph>=0.2.0,<1.0.0",
+            "langchain-core>=0.3.0",
             "black>=23.0.0",
             "mypy>=1.0.0",
         ],
