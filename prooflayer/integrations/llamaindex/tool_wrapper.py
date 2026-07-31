@@ -239,9 +239,9 @@ def _context_metadata(chunk: Any) -> dict[str, Any]:
             if key in chunk:
                 metadata.setdefault(key, chunk[key])
         return metadata
-    metadata = getattr(chunk, "metadata", None)
-    if isinstance(metadata, dict):
-        result = dict(metadata)
+    node_metadata = getattr(chunk, "metadata", None)
+    if isinstance(node_metadata, dict):
+        result = dict(node_metadata)
     else:
         result = {}
     for attr in ("id_", "node_id", "source", "doc_id"):
