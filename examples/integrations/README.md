@@ -4,6 +4,19 @@ Patterns for embedding ProofLayer into MCP gateways, proxies, and agent platform
 
 ## Files
 
+### Agent framework examples
+
+These examples use tiny local runtime objects so the ProofLayer security behavior
+can be exercised without API keys:
+
+```bash
+python3 examples/integrations/openai_agents/simple_guardrail.py
+python3 examples/integrations/crewai/simple_crew.py
+python3 examples/integrations/autogen/simple_agent.py
+python3 examples/integrations/semantic_kernel/simple_kernel.py
+python3 examples/integrations/pydantic_ai/simple_agent.py
+```
+
 ### [`mcp_gateway_proxy.py`](mcp_gateway_proxy.py)
 
 Reference pattern showing how a gateway (e.g., ToolHive, custom enterprise reverse-proxy) routes MCP tool-call requests through ProofLayer before forwarding to the backend MCP server.

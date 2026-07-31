@@ -97,3 +97,28 @@ pip install "prooflayer-rules[llamaindex]"
 ```
 
 Both integrations keep optional framework imports out of the base import path.
+
+## Phase 3 Status
+
+Phase 3 adds dependency-light wrappers for agent-framework runtimes:
+
+| Integration | Public API | Protected surfaces |
+|---|---|---|
+| OpenAI Agents SDK | `ProofLayerGuardrail.wrap_agent(agent)` | agent input, output, tools, handoffs |
+| CrewAI | `SecurityMiddleware.wrap_crew(crew)` / `wrap_agent(agent)` | crew input, output, tools, delegation |
+| AutoGen | `SecurityMiddleware.wrap_agent(agent)` | messages, output, tools, handoffs |
+| Semantic Kernel | `SecurityMiddleware.wrap_kernel(kernel)` / `wrap_agent(agent)` | kernel input, output, tools, handoffs |
+| Pydantic AI | `SecurityMiddleware.wrap_agent(agent)` | typed-agent input, output, tools, handoffs |
+
+The optional extras are:
+
+```bash
+pip install "prooflayer-rules[openai-agents]"
+pip install "prooflayer-rules[crewai]"
+pip install "prooflayer-rules[autogen]"
+pip install "prooflayer-rules[semantic-kernel]"
+pip install "prooflayer-rules[pydantic-ai]"
+```
+
+These adapters share role-drift, unsafe-handoff, and cross-agent instruction
+smuggling checks through `prooflayer.integrations.common.AgentSecurity`.

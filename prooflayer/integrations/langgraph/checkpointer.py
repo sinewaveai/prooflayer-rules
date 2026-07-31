@@ -128,9 +128,9 @@ class AuditCheckpointer(BaseCheckpointSaver):
                 "event_type": event_type,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "thread_id": configurable.get("thread_id"),
-                "checkpoint_id": checkpoint.get("id")
-                if isinstance(checkpoint, dict)
-                else None,
+                "checkpoint_id": (
+                    checkpoint.get("id") if isinstance(checkpoint, dict) else None
+                ),
                 "metadata": metadata,
             }
         )
