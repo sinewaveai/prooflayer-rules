@@ -57,6 +57,21 @@ setup(
         "llamaindex": [
             "llama-index>=0.14.23",
         ],
+        "openai-agents": [
+            "openai-agents>=0.8.4",
+        ],
+        "crewai": [
+            "crewai>=0.5.0",
+        ],
+        "autogen": [
+            "autogen-agentchat>=0.2.40",
+        ],
+        "semantic-kernel": [
+            "semantic-kernel>=1.44.0",
+        ],
+        "pydantic-ai": [
+            "pydantic-ai>=0.8.1",
+        ],
         "evals": [
             "docker>=7.0.0",
             "pyyaml>=6.0.0",
@@ -70,10 +85,26 @@ setup(
             "langchain-core>=0.3.0",
             "langchain-mcp-adapters>=0.3.1",
             "llama-index>=0.14.23",
+            "openai-agents>=0.8.4",
+            "crewai>=0.5.0",
+            "autogen-agentchat>=0.2.40",
+            "semantic-kernel>=1.44.0",
+            "pydantic-ai>=0.8.1",
             "docker>=7.0.0",
             "pyyaml>=6.0.0",
             "jinja2>=3.1.0",
             "weasyprint>=60.0",
+        ],
+        "all-integrations": [
+            "langgraph>=0.2.0,<1.0.0",
+            "langchain-core>=0.3.0",
+            "langchain-mcp-adapters>=0.3.1",
+            "llama-index>=0.14.23",
+            "openai-agents>=0.8.4",
+            "crewai>=0.5.0",
+            "autogen-agentchat>=0.2.40",
+            "semantic-kernel>=1.44.0",
+            "pydantic-ai>=0.8.1",
         ],
         "dev": [
             "pytest>=7.0.0",
